@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Offensive Security</title>
+</head>
+<body>
+  <h1>Offensive Security</h1>
+  <p>Welcome to the offensive security section.</p>
+  <a href="../edr.html">Back to Home</a>
+</body>
+</html>
