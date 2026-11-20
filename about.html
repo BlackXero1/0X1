@@ -117,7 +117,7 @@ footer a{color:var(--accent)}
   <div class="container">
     <div class="hero-eyebrow">About</div>
     <h1 class="hero-title">BlackXero1</h1>
-    <p class="hero-sub">Senior malware analyst and reverse engineer. I break down malicious software and write about what I find.</p>
+    <p class="hero-sub">Malware analyst and reverse engineer. I study how modern threats are built, how they hide, and how to catch them.</p>
   </div>
 </header>
 
@@ -126,8 +126,9 @@ footer a{color:var(--accent)}
 
     <div class="section bio">
       <h2>Background</h2>
-      <p>I specialize in the full malware analysis pipeline — from initial triage and static disassembly through to live detonation, C2 protocol dissection, and IOC extraction. Every write-up is grounded in hands-on analysis: real samples, real syscalls, real network traffic.</p>
-      <p>My core work covers static reverse engineering with IDA Pro and Ghidra, behavioral analysis with Procmon and Wireshark, unpacking and deobfuscation, and detection engineering — writing YARA signatures, Sigma rules, and KQL queries mapped to ATT&amp;CK. On the offensive side I research EDR evasion, Windows internals, and low-level syscall techniques to sharpen detection coverage.</p>
+      <p>I take malicious software apart end to end, from first triage to recovered payloads, decoded C2 and detection content that defenders can deploy the same day.</p>
+      <p>My work centres on reverse engineering custom loaders and implants, unpacking multi-stage delivery chains, tracking threat actors across campaigns, and turning every finding into detections mapped to MITRE ATT&amp;CK.</p>
+      <p>I also study attacker tradecraft (evasion, injection and Windows internals) so that the detections I write hold up against how real intrusions work.</p>
     </div>
 
     <div class="section">
@@ -136,64 +137,42 @@ footer a{color:var(--accent)}
         <div class="skill-card">
           <h3>Malware Analysis</h3>
           <ul>
-            <li>Static + dynamic RE</li>
-            <li>Unpacking &amp; deobfuscation</li>
-            <li>C2 protocol dissection</li>
-            <li>IOC extraction</li>
-            <li>Maldoc / LNK / MSI chains</li>
+            <li>Multi-stage delivery chains</li>
+            <li>Unpacking &amp; payload recovery</li>
+            <li>C2 protocol analysis</li>
+            <li>Infostealers, RATs &amp; implants</li>
+            <li>Maldoc, LNK &amp; MSI delivery</li>
           </ul>
         </div>
         <div class="skill-card">
           <h3>Reverse Engineering</h3>
           <ul>
-            <li>IDA Pro, Ghidra, x64dbg</li>
-            <li>PE internals</li>
-            <li>.NET / Go / Rust / Delphi</li>
-            <li>Shellcode analysis</li>
-            <li>Frida + TinyTracer</li>
+            <li>Static &amp; dynamic analysis</li>
+            <li>Custom crypto &amp; string decoding</li>
+            <li>Shellcode &amp; PIC loaders</li>
+            <li>Anti-analysis &amp; sandbox checks</li>
+            <li>Variant &amp; build comparison</li>
           </ul>
         </div>
         <div class="skill-card">
           <h3>Threat Intelligence</h3>
           <ul>
-            <li>APT tracking</li>
-            <li>YARA / Sigma / KQL</li>
+            <li>Threat actor tracking</li>
+            <li>Infrastructure &amp; certificate pivots</li>
+            <li>Campaign clustering</li>
             <li>ATT&amp;CK mapping</li>
-            <li>Pivot on infra / certs</li>
             <li>TLP:CLEAR reporting</li>
           </ul>
         </div>
         <div class="skill-card">
-          <h3>Offensive Research</h3>
+          <h3>Detection Engineering</h3>
           <ul>
-            <li>EDR evasion techniques</li>
-            <li>Syscall &amp; NTDLL patching</li>
-            <li>Process injection</li>
-            <li>Windows internals</li>
-            <li>Authorized lab only</li>
+            <li>YARA signatures</li>
+            <li>Sigma &amp; SIEM queries</li>
+            <li>Behavioural hunts</li>
+            <li>IOC packages</li>
+            <li>Evasion-aware detections</li>
           </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Toolset</h2>
-      <div class="tool-block">
-        <div class="tool-block-label">Static</div>
-        <div class="tool-row">
-          <span class="tag">IDA Pro</span><span class="tag">Ghidra</span><span class="tag">PEStudio</span><span class="tag">DIE</span><span class="tag">FLOSS</span><span class="tag">CFF Explorer</span><span class="tag">dnSpy</span><span class="tag">de4dot</span>
-        </div>
-      </div>
-      <div class="tool-block">
-        <div class="tool-block-label">Dynamic</div>
-        <div class="tool-row">
-          <span class="tag">x64dbg</span><span class="tag">Procmon</span><span class="tag">Wireshark</span><span class="tag">Frida</span><span class="tag">TinyTracer</span><span class="tag">PE-Sieve</span><span class="tag">HollowsHunter</span>
-        </div>
-      </div>
-      <div class="tool-block">
-        <div class="tool-block-label">Detection</div>
-        <div class="tool-row">
-          <span class="tag">YARA</span><span class="tag">Sigma</span><span class="tag">KQL</span><span class="tag">VirusTotal</span><span class="tag">Shodan</span><span class="tag">Censys</span>
         </div>
       </div>
     </div>
@@ -201,10 +180,31 @@ footer a{color:var(--accent)}
     <div class="section">
       <h2>Posts</h2>
       <div class="post-list">
+        <a href="/0X1/reverse-engineering/go-dropper.html" class="post-row">
+          <div class="post-row-left">
+            <div class="eyebrow">Reverse Engineering · Go Malware</div>
+            <div class="title">Six Locks, No Key</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+        <a href="/0X1/dfir/memory-forensics.html" class="post-row">
+          <div class="post-row-left">
+            <div class="eyebrow">DFIR · Memory Forensics</div>
+            <div class="title">Memory Tells the Truth</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
         <a href="/0X1/offensive/edr.html" class="post-row">
           <div class="post-row-left">
             <div class="eyebrow">Offensive Security</div>
             <div class="title">EDR Evasion — Layers, Live</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+        <a href="/0X1/malware-analysis/clickfix.html" class="post-row">
+          <div class="post-row-left">
+            <div class="eyebrow">Malware Analysis · Initial Access</div>
+            <div class="title">ClickFix: Two Chains, One Technique</div>
           </div>
           <span class="arrow">→</span>
         </a>
