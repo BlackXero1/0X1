@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six Locks, No Key — 0X1</title>
+<meta name="description" content="Reversing a Go 1.21 dropper's six-step inline payload decryption with GoReSym, capstone and Python, and statically unpacking a novel infostealer without executing it.">
+<meta name="author" content="BlackXero1">
+<meta property="og:title" content="Six Locks, No Key — Reversing a Go Dropper — 0X1">
+<meta property="og:description" content="Reversing a Go 1.21 dropper's six-step inline payload decryption with GoReSym, capstone and Python, and statically unpacking a novel infostealer without executing it.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html">
+<meta property="og:site_name" content="0X1">
+<link rel="icon" href="/0X1/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html">
+<style>
+:root{
+  --bg:#F2F5F9;--bg-alt:#E6EBF3;--surface:#FFFFFF;--surface-2:#EEF2F8;
+  --border:#C8D3E2;--text:#0D1423;--text-muted:#55657E;
+  --accent:#0284C7;--accent-glow:rgba(2,132,199,0.10);
+  --code-bg:#12192B;--code-text:#CDD5E0;--code-dim:#6B7FA0;
+  --tag-note-bg:#EFF6FF;--tag-note-fg:#1D4ED8;
+  --tag-warn-bg:#FFF7ED;--tag-warn-fg:#C2410C;
+  --tag-pass-bg:#F0FDF4;--tag-pass-fg:#166534;
+  --tag-red-bg:#FEF2F2;--tag-red-fg:#991B1B;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#08090D;--bg-alt:#0C0F18;--surface:#10141F;--surface-2:#161D2E;
+    --border:#1E2A40;--text:#D4DCE8;--text-muted:#7A8AA0;
+    --accent:#00B4D8;--accent-glow:rgba(0,180,216,0.10);
+    --code-bg:#0B0D13;
+    --tag-note-bg:rgba(0,180,216,0.10);--tag-note-fg:#00B4D8;
+    --tag-warn-bg:rgba(251,146,60,0.10);--tag-warn-fg:#FB923C;
+    --tag-pass-bg:rgba(63,185,80,0.10);--tag-pass-fg:#3FB950;
+    --tag-red-bg:rgba(248,81,73,0.10);--tag-red-fg:#F85149;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#08090D;--bg-alt:#0C0F18;--surface:#10141F;--surface-2:#161D2E;
+  --border:#1E2A40;--text:#D4DCE8;--text-muted:#7A8AA0;
+  --accent:#00B4D8;--accent-glow:rgba(0,180,216,0.10);
+  --code-bg:#0B0D13;
+  --tag-note-bg:rgba(0,180,216,0.10);--tag-note-fg:#00B4D8;
+  --tag-warn-bg:rgba(251,146,60,0.10);--tag-warn-fg:#FB923C;
+  --tag-pass-bg:rgba(63,185,80,0.10);--tag-pass-fg:#3FB950;
+  --tag-red-bg:rgba(248,81,73,0.10);--tag-red-fg:#F85149;
+}
+:root[data-theme="light"]{
+  --bg:#F2F5F9;--bg-alt:#E6EBF3;--surface:#FFFFFF;--surface-2:#EEF2F8;
+  --border:#C8D3E2;--text:#0D1423;--text-muted:#55657E;
+  --accent:#0284C7;--accent-glow:rgba(2,132,199,0.10);
+  --code-bg:#12192B;--code-text:#CDD5E0;--code-dim:#6B7FA0;
+  --tag-note-bg:#EFF6FF;--tag-note-fg:#1D4ED8;
+  --tag-warn-bg:#FFF7ED;--tag-warn-fg:#C2410C;
+  --tag-pass-bg:#F0FDF4;--tag-pass-fg:#166534;
+  --tag-red-bg:#FEF2F2;--tag-red-fg:#991B1B;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:780px;margin:0 auto;padding:0 28px}
+
+nav{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:12px 0;position:sticky;top:0;z-index:100}
+nav .container{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{font-size:17px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+.nav-brand span{color:var(--accent)}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:13px;font-weight:600;color:var(--text-muted)}
+.nav-links a:hover{color:var(--accent);text-decoration:none}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text-muted);cursor:pointer;flex-shrink:0}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.hero{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:60px 0 48px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 100% 50%,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-eyebrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.08em;text-transform:uppercase}
+.badge-blue{background:var(--tag-note-bg);color:var(--tag-note-fg);border:1px solid rgba(0,180,216,.2)}
+.badge-green{background:var(--tag-pass-bg);color:var(--tag-pass-fg);border:1px solid rgba(63,185,80,.2)}
+.badge-orange{background:var(--tag-warn-bg);color:var(--tag-warn-fg);border:1px solid rgba(251,146,60,.2)}
+.hero h1{font-size:clamp(26px,4.5vw,42px);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:16px}
+.hero-sub{font-size:16px;color:var(--text-muted);max-width:620px;line-height:1.65;margin-bottom:24px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:20px;font-size:13px;color:var(--text-muted);font-family:"Cascadia Code","Fira Code",Consolas,monospace}
+
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:28px 0}
+.stat-cell{background:var(--surface);padding:18px 16px;text-align:center}
+.stat-num{font-size:28px;font-weight:900;letter-spacing:-.04em;color:var(--accent);font-family:"Cascadia Code","Fira Code",Consolas,monospace;line-height:1}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--text-muted);margin-top:6px;line-height:1.3}
+
+.intel-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:24px 0}
+.intel-card-row{display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--border)}
+.intel-card-row:last-child{border-bottom:none}
+.intel-label{background:var(--surface-2);padding:10px 16px;font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center}
+.intel-value{padding:10px 16px;font-size:13.5px;color:var(--text)}
+
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin:36px 0}
+.toc-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px}
+.toc ol{padding-left:18px}
+.toc li{font-size:14px;padding:3px 0}
+.toc a{color:var(--text-muted)}
+.toc a:hover{color:var(--accent)}
+
+.article{padding:48px 0 80px}
+.article h2{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:52px 0 16px;padding-top:8px;border-top:1px solid var(--border)}
+.article h2:first-child{margin-top:0;border-top:none}
+.article h3{font-size:12px;font-weight:700;letter-spacing:.10em;color:var(--accent);margin:32px 0 12px;text-transform:uppercase}
+.article p{font-size:15.5px;color:var(--text);margin-bottom:16px;line-height:1.75}
+.article ul,.article ol{margin:0 0 16px 20px}
+.article li{font-size:15px;color:var(--text);padding:3px 0;line-height:1.65}
+.article strong{font-weight:700}
+
+.exec-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:36px}
+.exec-box .exec-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.exec-box p{font-size:14.5px;color:var(--text-muted);margin-bottom:10px;line-height:1.65}
+.exec-box p:last-child{margin-bottom:0}
+
+.callout{border-radius:8px;padding:16px 20px;margin:20px 0;font-size:14px;line-height:1.65}
+.callout-blue{background:var(--tag-note-bg);border:1px solid rgba(0,180,216,.25);color:var(--tag-note-fg)}
+.callout-orange{background:var(--tag-warn-bg);border:1px solid rgba(251,146,60,.25);color:var(--tag-warn-fg)}
+.callout strong{font-weight:700;display:block;margin-bottom:4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+.pullquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;font-size:16px;font-style:italic;color:var(--text-muted);line-height:1.65}
+
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;overflow-x:auto;margin:20px 0}
+code{font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:13px;color:var(--code-text)}
+pre code{font-size:12.5px}
+.c{color:#6B7FA0}.k{color:#79D4F1}.s{color:#A8D8A8}.n{color:#FFB347}
+p code,li code{background:var(--surface-2);padding:2px 6px;border-radius:4px;font-size:12.5px;color:var(--accent);border:1px solid var(--border)}
+
+.section-num{font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:11px;color:var(--accent);opacity:.7;margin-right:8px}
+
+table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13.5px}
+th{background:var(--surface-2);border:1px solid var(--border);padding:9px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+td{border:1px solid var(--border);padding:9px 14px;color:var(--text);vertical-align:top}
+td code{font-size:11.5px}
+tr:nth-child(even) td{background:var(--surface)}
+
+.exp-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin:24px 0}
+.exp-block-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+
+.score-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.score-row:last-child{border-bottom:none}
+.score-high{font-weight:700;color:var(--tag-pass-fg)}
+.score-low{font-weight:700;color:var(--tag-warn-fg)}
+.score-none{font-weight:700;color:var(--tag-red-fg)}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;letter-spacing:.04em}
+.tag-blue{background:var(--tag-note-bg);color:var(--tag-note-fg)}
+.tag-orange{background:var(--tag-warn-bg);color:var(--tag-warn-fg)}
+.tag-green{background:var(--tag-pass-bg);color:var(--tag-pass-fg)}
+
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-size:13px;color:var(--text-muted);margin-top:48px;line-height:1.6}
+.disclaimer strong{color:var(--text);display:block;margin-bottom:4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color:var(--text-muted);font-size:13px}
+footer a{color:var(--accent)}
+
+@media(max-width:600px){
+  .hero{padding:40px 0 32px}
+  .stat-strip{grid-template-columns:1fr 1fr}
+  .intel-card-row{grid-template-columns:1fr}
+  .intel-label{border-bottom:1px solid var(--border)}
+}
+.tldr{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:8px;padding:20px 24px;margin:0 0 36px}
+.tldr-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.tldr ul{margin:0 0 0 18px}
+.tldr li{font-size:14.5px;padding:3px 0}
+.lede{font-size:18px !important;line-height:1.7 !important}
+.verdict{display:flex;gap:12px;align-items:flex-start;background:var(--tag-pass-bg);border:1px solid rgba(63,185,80,.25);border-radius:8px;padding:14px 18px;margin:20px 0;font-size:14.5px;color:var(--text)}
+.verdict b{color:var(--tag-pass-fg);font-size:11px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+.post-nav{display:flex;justify-content:space-between;gap:16px;margin-top:40px;font-size:14px}
+</style>
+</head>
+<body>
+<script>(function(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+
+<nav>
+  <div class="container">
+    <a href="/0X1/" class="nav-brand"><span>0X</span>1</a>
+    <div class="nav-links">
+      <a href="/0X1/">Home</a>
+      <a href="/0X1/about.html">About</a>
+    </div>
+    <button class="theme-btn" onclick="(function(){const r=document.documentElement;const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');localStorage.setItem('theme',r.getAttribute('data-theme'))})()">◑</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <span class="badge badge-blue">Reverse Engineering</span>
+      <span class="badge badge-blue">Go Malware</span>
+      <span class="badge badge-orange">Static Unpacking</span>
+    </div>
+    <h1>Six Locks, No Key</h1>
+    <p class="hero-sub">Reversing a Go dropper's six-step payload decryption, and unpacking its infostealer without ever running it.</p>
+    <div class="hero-meta">
+      <span>📅 2026-11-20</span>
+      <span>🔖 GoReSym · capstone · Ghidra · Python</span>
+      <span>⏱ 12 min read</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+<div class="article">
+
+<div class="tldr">
+  <div class="tldr-label">TL;DR</div>
+  <ul>
+    <li><code>newGOYAL.exe</code> is a 2.7 MB Go 1.21 dropper from the <a href="/0X1/malware-analysis/clickfix.html">morganqw ClickFix campaign</a>. It has stripped-looking symbols, no readable strings, and only kernel32 imports.</li>
+    <li>Hidden in <code>.rdata</code> is a <strong>327,984-byte encrypted blob</strong>. The dropper decrypts it with <strong>six inline byte transforms</strong>, not a crypto library.</li>
+    <li>I recovered the function names with GoReSym, found the one function that touches the blob, and read the six loops in disassembly. Then I <strong>replayed them in 15 lines of Python</strong>.</li>
+    <li>The output was a clean PE64: a novel infostealer that targets Roblox, Steam and Chrome. I never had to execute anything.</li>
+  </ul>
+</div>
+
+<p class="lede">The dropper landed as the third stage of a ClickFix chain. It was 2.7 MB, written in Go, and signed with a self-signed certificate for a company called "Sterling Craft Analytics". The first look said almost nothing.</p>
+
+<p>DIE reported Go 1.21.1 with no packer. The import table was kernel32 only: 45 functions, the standard Go runtime set. <code>strings</code> showed Go runtime noise and no URLs, paths or commands. The PE timestamp was zeroed. Nothing on the surface said what this binary was for.</p>
+
+<p>Go malware is popular with operators for this reason. One static binary, a huge runtime that buries your code, and tooling that wasn't built with Go in mind. This post walks through how I got from that blank wall to a decrypted payload, and how you can do the same on the next Go dropper you meet.</p>
+
+<h2 id="why-go"><span class="section-num">01</span> Why Go binaries feel hard</h2>
+
+<p>Opening a Go binary in a disassembler for the first time is disorienting. A few things work against you:</p>
+<ul>
+  <li><strong>The runtime is enormous.</strong> A hello-world Go binary contains thousands of functions. Your malware's logic is a few dozen of them.</li>
+  <li><strong>Strings aren't null-terminated.</strong> Go stores strings as pointer plus length, packed together in one big blob. Tools that look for C strings split them in odd places or miss them.</li>
+  <li><strong>The calling convention is different.</strong> Since Go 1.17, arguments go in registers using Go's own ABI (RAX, RBX, RCX, RDI…), not the Windows x64 convention. Decompilers that assume Windows conventions show garbage parameters.</li>
+  <li><strong>Stripping doesn't really strip.</strong> Go keeps a function table, <code>pclntab</code>, for stack traces and garbage collection, so the names are still in there. Tools just need to know how to read it.</li>
+</ul>
+
+<p>That last point is the way in.</p>
+
+<h2 id="symbols"><span class="section-num">02</span> Step one: get the names back</h2>
+
+<p>Before you open a disassembler, run <a href="https://github.com/mandiant/GoReSym" target="_blank" rel="noopener">GoReSym</a>. It parses <code>pclntab</code> and the module data, then hands you back function names, source file paths, the Go version, and the build ID.</p>
+
+<pre><code>goresym.exe -t -d -p newGOYAL.exe &gt; goresym.json</code></pre>
+
+<p>That gave me:</p>
+<table>
+  <thead><tr><th>Field</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Go version</td><td><code>go1.21.1</code>, amd64, <code>-trimpath</code>, CGO off</td></tr>
+    <tr><td>Module path</td><td><code>SterlingCraftAnalytics</code></td></tr>
+    <tr><td>Build ID</td><td><code>9IvKqeaCdMt8sElOh9GO/…</code></td></tr>
+    <tr><td>User functions</td><td>38, all in package <code>main</code></td></tr>
+  </tbody>
+</table>
+
+<p>Thirty-eight functions in <code>main</code> is a manageable target. Everything else is the Go standard library and can be ignored. The author had randomised the names (<code>main.eNgv2uhCRt</code>, <code>main.w0Ny3IKk</code>), which hides intent but not location. I knew exactly which 38 functions to look at.</p>
+
+<div class="callout callout-blue">
+  <strong>Free detection material</strong>
+  The module path and build ID survive in every build from this project. <code>SterlingCraftAnalytics</code> also matched the certificate subject. Both went straight into the YARA rule at the end of this post.
+</div>
+
+<h2 id="blob"><span class="section-num">03</span> Step two: find the hidden payload</h2>
+
+<p>No readable strings plus runtime API resolution through <code>LoadLibraryW</code>/<code>GetProcAddress</code> usually means something is being decrypted. To find out where, I ran a 16 KB sliding-window entropy scan across the file.</p>
+
+<p>Overall entropy was unremarkable (<code>.text</code> 6.19, <code>.rdata</code> 6.36), which is why DIE said "not packed". The sliding window told a different story. There was a long run above 7.5 inside <code>.rdata</code>, which is what encrypted data looks like. Averaging over the whole section had hidden it.</p>
+
+<p>Next question: which code reads it? Go loads data addresses with RIP-relative <code>LEA</code> instructions. I used capstone to disassemble the 38 <code>main.*</code> functions and resolve every RIP-relative <code>LEA</code> target. Exactly one function pointed into the high-entropy region:</p>
+
+<pre><code>main.eNgv2uhCRt
+    lea  rsi, [rip + 0x…]     <span class="c">; → VA 0x593900  (start of the blob)</span></code></pre>
+
+<p>One function, one blob, starting at VA <code>0x593900</code>. The next job was working out what that function does to it.</p>
+
+<h2 id="loops"><span class="section-num">04</span> Step three: read the loops</h2>
+
+<p>Ghidra struggled here. Two of the <code>main</code> functions were so large that decompilation timed out, and the call into the decryption logic was inlined into a very long body. Instead of fighting the decompiler, I went back to raw disassembly and looked for the shape of a byte-transform loop: a load from <code>[base+i]</code>, some arithmetic, a store back to the same address, then <code>inc</code> and <code>cmp</code> against the length.</p>
+
+<p>There were six of these loops back to back, one after another, over the same buffer:</p>
+
+<table>
+  <thead><tr><th>#</th><th>Loop address</th><th>Operation</th><th>What it looks like in asm</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>0x542a68</code></td><td>Rotate each byte left by 4</td><td><code>rol al, 4</code></td></tr>
+    <tr><td>2</td><td><code>0x542e8d</code></td><td>Reverse the whole buffer</td><td>swap <code>[i]</code> ↔ <code>[0x5012f − i]</code></td></tr>
+    <tr><td>3</td><td><code>0x5432be</code></td><td><code>b = (b + i·0x1D + 0x0B) mod 256</code></td><td><code>imul</code> by 0x1D, <code>add</code></td></tr>
+    <tr><td>4</td><td><code>0x543acb</code></td><td>Swap the two halves at <code>0x28098</code></td><td>block copy around midpoint</td></tr>
+    <tr><td>5</td><td><code>0x543ee8</code></td><td><code>b = (b − i·17 + 0x51) mod 256</code></td><td><code>imul</code> by 0x11, <code>sub</code></td></tr>
+    <tr><td>6</td><td><code>0x5442f6</code></td><td>Rotate each byte left by 4 again</td><td><code>rol al, 4</code></td></tr>
+  </tbody>
+</table>
+
+<p>The constants check each other. The reverse loop's upper bound <code>0x5012f</code> is <em>length − 1</em>, and <code>0x28098</code> is exactly <em>length ÷ 2</em>. Both give a blob length of <strong><code>0x50130</code> = 327,984 bytes</strong>. When two independent constants agree on the size, you know you've read the loops correctly.</p>
+
+<h3>Why this is weak crypto, and why that doesn't matter</h3>
+<p>None of these steps uses a key. A byte rotation by 4 just swaps the two nibbles. Reverse and half-swap only move bytes around. The two linear steps use the byte's own index as the "key". Once you can read the loops, you can undo them, and there's no secret to brute force.</p>
+<p>But it was never meant to resist an analyst. It's meant to resist <strong>scanners</strong>. The blob has no PE header, no repeating patterns and no strings, so a static AV engine or YARA rule sees noise. It only becomes a PE in memory, for a moment, right before it's loaded.</p>
+
+<div class="pullquote">The encryption isn't there to stop you. It's there to stop the signature engine from seeing an MZ header.</div>
+
+<h2 id="replay"><span class="section-num">05</span> Step four: replay it in Python</h2>
+
+<p>With the six operations known, the decoder is short. I carved the 327,984 bytes from <code>.rdata</code> starting at the file offset for VA <code>0x593900</code>, then applied the steps in the same order as the binary:</p>
+
+<pre><code><span class="k">import</span> pefile, hashlib, sys
+
+<span class="k">def</span> <span class="n">rol4</span>(buf):
+    <span class="k">return</span> bytearray(((b &lt;&lt; <span class="n">4</span>) | (b &gt;&gt; <span class="n">4</span>)) &amp; <span class="n">0xFF</span> <span class="k">for</span> b <span class="k">in</span> buf)
+
+<span class="k">def</span> <span class="n">decrypt</span>(blob):
+    b = rol4(blob)                                              <span class="c"># 1  ROL 4</span>
+    b.reverse()                                                 <span class="c"># 2  reverse</span>
+    b = bytearray((x + i*<span class="n">0x1D</span> + <span class="n">0x0B</span>) &amp; <span class="n">0xFF</span> <span class="k">for</span> i, x <span class="k">in</span> enumerate(b))  <span class="c"># 3</span>
+    h = len(b) // <span class="n">2</span>; b = b[h:] + b[:h]                         <span class="c"># 4  half-swap</span>
+    b = bytearray((x - i*<span class="n">17</span> + <span class="n">0x51</span>) &amp; <span class="n">0xFF</span> <span class="k">for</span> i, x <span class="k">in</span> enumerate(b))    <span class="c"># 5</span>
+    <span class="k">return</span> rol4(b)                                             <span class="c"># 6  ROL 4</span>
+
+pe   = pefile.PE(sys.argv[<span class="n">1</span>])
+off  = pe.get_offset_from_rva(<span class="n">0x593900</span> - pe.OPTIONAL_HEADER.ImageBase)
+blob = open(sys.argv[<span class="n">1</span>], <span class="s">"rb"</span>).read()[off:off + <span class="n">0x50130</span>]
+out  = decrypt(blob)
+
+<span class="k">assert</span> out[:<span class="n">2</span>] == <span class="s">b"MZ"</span>
+open(<span class="s">"inner_payload.bin"</span>, <span class="s">"wb"</span>).write(out)
+print(hashlib.sha256(out).hexdigest())</code></pre>
+
+<p>First run:</p>
+<pre><code>619adb8364cdeeb2db24d8da5e051e9e4242033f6fb1931e90e42116609a8fad</code></pre>
+
+<p>The <code>MZ</code> assert passed, and <code>pefile</code> parsed the output as a valid PE64 with <code>.text</code>, <code>.rdata</code>, <code>.data</code> and <code>.reloc</code>. Its compile timestamp was 2026-11-06, four days before the campaign's delivery timestamp. The dropper was unpacked, and I hadn't executed a single instruction of it.</p>
+
+<div class="callout callout-orange">
+  <strong>Why a static replay beats dumping from memory here</strong>
+  The next stage turned out to have anti-sandbox checks, and every detonation in my VM exited within five seconds. A memory-dump approach would have got nothing. A static replay doesn't care what the malware thinks of your VM.
+</div>
+
+<h2 id="payload"><span class="section-num">06</span> What came out</h2>
+
+<p><code>inner_payload.bin</code> is a C/C++ PE64 with zero YARA matches across 1,062 community rules. It's a custom infostealer. It also encrypts its strings at rest, but FLOSS decoded them, and its import table already gave away a lot:</p>
+
+<table>
+  <thead><tr><th>Evidence</th><th>Capability</th></tr></thead>
+  <tbody>
+    <tr><td><code>name="atok"</code>, <code>RobloxCookies.dat</code></td><td>Roblox session theft</td></tr>
+    <tr><td><code>\REGISTRY\MACHINE\SOFTWARE\Valve\Steam</code>, <code>steam.exe</code></td><td>Steam account targeting</td></tr>
+    <tr><td><code>Login Data</code> + <code>CryptUnprotectMemory</code></td><td>Chrome credential theft</td></tr>
+    <tr><td>GDI32 <code>BitBlt</code> / <code>GetDIBits</code></td><td>Screenshots</td></tr>
+    <tr><td><code>GlobalLock</code> / <code>GlobalUnlock</code></td><td>Clipboard theft</td></tr>
+    <tr><td><code>multipart/form-data</code> → <code>https://debuginfo.org</code></td><td>Exfiltration over WinHTTP</td></tr>
+  </tbody>
+</table>
+
+<p>It also has three gates in its entry point. One of them walks the PEB module list, hashes every loaded DLL name, and quits silently if any of 18 hashes match. That explains the five-second exits during detonation. The full payload analysis is in the <a href="/0X1/malware-analysis/clickfix.html">ClickFix post</a>; this one is about getting to it.</p>
+
+<h2 id="method"><span class="section-num">07</span> The method, for your next Go dropper</h2>
+
+<ol>
+  <li><strong>GoReSym first.</strong> Get the names, the version and the module path before opening a disassembler. Filter to <code>main.*</code> and ignore the runtime.</li>
+  <li><strong>Use sliding-window entropy, not section entropy.</strong> Averages hide embedded blobs.</li>
+  <li><strong>Follow the RIP-relative <code>LEA</code>s.</strong> Find which <code>main</code> function references the high-entropy range. That's usually your decryptor.</li>
+  <li><strong>When the decompiler times out, read loops.</strong> Load, arithmetic, store, increment, compare. Byte-transform loops are easy to spot in raw assembly.</li>
+  <li><strong>Make the constants check each other.</strong> Lengths, midpoints and loop bounds should agree. If they don't, you've misread something.</li>
+  <li><strong>Replay in Python and assert on the output.</strong> <code>MZ</code> at offset 0 and a clean <code>pefile</code> parse are your proof.</li>
+</ol>
+
+<h2 id="detect"><span class="section-num">08</span> Detection</h2>
+
+<p>The dropper leaves stable features that don't depend on the payload:</p>
+
+<pre><code><span class="k">rule</span> morganqw_go_dropper {
+    <span class="k">meta</span>:
+        description = <span class="s">"Go dropper from morganqw ClickFix chain (newGOYAL.exe)"</span>
+        author      = <span class="s">"BlackXero1"</span>
+        date        = <span class="s">"2026-11-20"</span>
+        hash        = <span class="s">"0888ba835230f7675117e263ecac24a9c8443172780ce0b31f22a9ff938e9d62"</span>
+    <span class="k">strings</span>:
+        $go     = <span class="s">"Go build ID:"</span> ascii
+        $mod    = <span class="s">"SterlingCraftAnalytics"</span> ascii
+        $bid    = <span class="s">"9IvKqeaCdMt8sElOh9GO/"</span> ascii
+        $rol4   = { C0 C0 04 }                <span class="c">// rol al, 4</span>
+    <span class="k">condition</span>:
+        uint16(0) == 0x5A4D <span class="k">and</span> $go <span class="k">and</span> ($mod <span class="k">or</span> $bid) <span class="k">and</span> #rol4 &gt;= 2
+}</code></pre>
+
+<p>Detection beyond YARA:</p>
+<ul>
+  <li><strong>Certificate:</strong> self-signed, subject "Sterling Craft Analytics", thumbprint <code>9099B4EC70C56DFD23B20814D47EB3E3AEB92405</code>. Hunt for siblings signed with the same certificate.</li>
+  <li><strong>Behaviour:</strong> an unsigned or self-signed Go binary launched from a <code>%TEMP%\&lt;guid&gt;\</code> folder by <code>powershell.exe</code>, which then allocates executable memory.</li>
+</ul>
+
+<h3>IOCs</h3>
+<table>
+  <thead><tr><th>Indicator</th><th>Type</th></tr></thead>
+  <tbody>
+    <tr><td><code>0888ba835230f7675117e263ecac24a9c8443172780ce0b31f22a9ff938e9d62</code></td><td>SHA256, newGOYAL.exe</td></tr>
+    <tr><td><code>619adb8364cdeeb2db24d8da5e051e9e4242033f6fb1931e90e42116609a8fad</code></td><td>SHA256, decrypted infostealer</td></tr>
+    <tr><td><code>9099B4EC70C56DFD23B20814D47EB3E3AEB92405</code></td><td>Code-signing certificate thumbprint</td></tr>
+    <tr><td><code>debuginfo[.]org</code></td><td>Exfiltration C2</td></tr>
+    <tr><td><code>morganqw[.]online</code></td><td>Delivery</td></tr>
+  </tbody>
+</table>
+
+<h2 id="takeaways"><span class="section-num">09</span> Takeaways</h2>
+
+<div class="exec-box">
+  <div class="exec-label">The short version</div>
+  <p>Go isn't obfuscation; it's just unfamiliar. Recover the symbols, narrow down to <code>main</code>, find the function that touches the high-entropy data, and read its loops. Homemade "encryption" built from rotates and index-based arithmetic is reversible as soon as you've read it.</p>
+</div>
+
+<p>What I didn't get: the dropper's exact loading path for the decrypted PE wasn't fully traced. The large <code>main</code> functions defeated the decompiler, and imports of <code>VirtualAlloc</code> and <code>ResumeThread</code> suggest in-memory loading, but I haven't confirmed which technique it uses. That's an open question for anyone who picks up this sample next.</p>
+
+<p>For the rest of the chain, including the ClickFix lure, the AES PowerShell stages and the full infostealer behaviour, see <a href="/0X1/malware-analysis/clickfix.html">ClickFix: Two Chains, One Technique</a>.</p>
+
+<h2 id="refs"><span class="section-num">10</span> References</h2>
+<ul>
+  <li><a href="https://github.com/mandiant/GoReSym" target="_blank" rel="noopener">Mandiant GoReSym</a></li>
+  <li><a href="https://www.capstone-engine.org/" target="_blank" rel="noopener">Capstone disassembly framework</a></li>
+  <li><a href="https://github.com/erocarrera/pefile" target="_blank" rel="noopener">pefile</a></li>
+  <li><a href="https://go.dev/s/regabi" target="_blank" rel="noopener">Go internal ABI specification (register-based calling convention)</a></li>
+  <li>MITRE ATT&amp;CK: T1027 (Obfuscated Files or Information), T1140 (Deobfuscate/Decode), T1553.002 (Code Signing)</li>
+</ul>
+
+<div class="disclaimer">
+  <strong>Disclaimer</strong>
+  All analysis was carried out in a controlled, authorized environment, and published for defensive and educational use. Indicators are defanged where they could be clickable.
+</div>
+
+<div class="post-nav">
+  <a href="/0X1/">← All posts</a>
+  <a href="/0X1/malware-analysis/clickfix.html">Related: ClickFix: Two Chains, One Technique →</a>
+</div>
+
+</div>
+</div>
+
+<footer>
+  <div class="container">
+    © 2026 BlackXero1 · <a href="/0X1/">0X1 Blog</a> · All research authorized
+  </div>
+</footer>
+
+</body>
+</html>
