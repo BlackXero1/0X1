@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — 0X1</title>
+<meta name="description" content="BlackXero1 — senior malware analyst and reverse engineer. Offensive security research, EDR evasion, threat intelligence.">
+<meta property="og:title" content="About — 0X1">
+<meta property="og:url" content="https://blackxero1.github.io/0X1/about.html">
+<meta property="og:site_name" content="0X1">
+<link rel="canonical" href="https://blackxero1.github.io/0X1/about.html">
+<style>
+:root{
+  --bg:#F2F5F9;--bg-alt:#E6EBF3;--surface:#FFFFFF;--surface-2:#EEF2F8;
+  --border:#C8D3E2;--text:#0D1423;--text-muted:#55657E;
+  --accent:#0284C7;--accent-glow:rgba(2,132,199,0.10);
+  --code-bg:#12192B;--code-text:#CDD5E0;--code-dim:#6B7FA0;--hero-bytes:#0A4D6B;
+  --pass:#16A34A;--tag-pass-bg:#DCFCE7;--tag-pass-fg:#166534;
+  --tag-note-bg:#EFF6FF;--tag-note-fg:#1D4ED8;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#08090D;--bg-alt:#0C0F18;--surface:#10141F;--surface-2:#161D2E;
+    --border:#1E2A40;--text:#D4DCE8;--text-muted:#7A8AA0;
+    --accent:#00B4D8;--accent-glow:rgba(0,180,216,0.10);
+    --code-bg:#0B0D13;--hero-bytes:#79D4F1;
+    --pass:#3FB950;--tag-pass-bg:rgba(63,185,80,0.12);--tag-pass-fg:#3FB950;
+    --tag-note-bg:rgba(0,180,216,0.10);--tag-note-fg:#00B4D8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#08090D;--bg-alt:#0C0F18;--surface:#10141F;--surface-2:#161D2E;
+  --border:#1E2A40;--text:#D4DCE8;--text-muted:#7A8AA0;
+  --accent:#00B4D8;--accent-glow:rgba(0,180,216,0.10);
+  --code-bg:#0B0D13;--hero-bytes:#79D4F1;
+  --pass:#3FB950;--tag-pass-bg:rgba(63,185,80,0.12);--tag-pass-fg:#3FB950;
+  --tag-note-bg:rgba(0,180,216,0.10);--tag-note-fg:#00B4D8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:760px;margin:0 auto;padding:0 28px}
+
+/* nav */
+nav{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:12px 0;position:sticky;top:0;z-index:100}
+nav .container{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{font-size:17px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+.nav-brand span{color:var(--accent)}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:13px;font-weight:600;color:var(--text-muted)}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);text-decoration:none}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text-muted);cursor:pointer}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* hero */
+.hero{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:60px 0 48px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 100% 50%,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.hero-title{font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:16px}
+.hero-sub{font-size:16px;color:var(--text-muted);max-width:520px;line-height:1.65}
+
+/* content */
+.content{padding:48px 0 80px}
+.section{margin-bottom:48px}
+.section h2{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.bio p{font-size:15.5px;color:var(--text);margin-bottom:16px}
+
+/* skill grid */
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.skill-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.skill-card h3{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.skill-card ul{list-style:none;padding:0}
+.skill-card ul li{font-size:13px;color:var(--text-muted);padding:3px 0;display:flex;align-items:center;gap:7px}
+.skill-card ul li::before{content:"›";color:var(--accent);font-weight:700}
+
+/* tool table */
+.tool-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.tool-block-label{background:var(--surface-2);border-bottom:1px solid var(--border);padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--text-muted)}
+.tool-row{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;letter-spacing:.04em;background:var(--tag-note-bg);color:var(--tag-note-fg)}
+
+/* posts list */
+.post-list{display:flex;flex-direction:column;gap:14px}
+.post-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .15s}
+.post-row:hover{border-color:var(--accent)}
+.post-row-left .eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.post-row-left .title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.arrow{color:var(--accent);font-size:16px;flex-shrink:0;transition:transform .15s}
+.post-row:hover .arrow{transform:translateX(3px)}
+
+/* disclaimer */
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-size:13px;color:var(--text-muted);line-height:1.6}
+.disclaimer strong{color:var(--text);display:block;margin-bottom:4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color:var(--text-muted);font-size:13px}
+footer a{color:var(--accent)}
+@media(max-width:580px){.hero{padding:40px 0 32px}.skill-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<script>(function(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+
+<nav>
+  <div class="container">
+    <a href="/0X1/" class="nav-brand"><span>0X</span>1</a>
+    <div class="nav-links">
+      <a href="/0X1/">Home</a>
+      <a href="/0X1/about.html" class="active">About</a>
+      <a href="https://github.com/BlackXero1/0X1" target="_blank">GitHub</a>
+    </div>
+    <button class="theme-btn" onclick="(function(){const r=document.documentElement;const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');localStorage.setItem('theme',r.getAttribute('data-theme'))})()">◑</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">About</div>
+    <h1 class="hero-title">BlackXero1</h1>
+    <p class="hero-sub">Senior malware analyst and reverse engineer. I break down malicious software and write about what I find.</p>
+  </div>
+</header>
+
+<div class="content">
+  <div class="container">
+
+    <div class="section bio">
+      <h2>Background</h2>
+      <p>I work in a dedicated, snapshot-protected lab environment running FlareVM on Windows. Every write-up here is from a real sample run — real syscalls, real network traffic, real output. Nothing is simulated.</p>
+      <p>My focus is the full analysis chain: static RE in IDA Pro and Ghidra, dynamic detonation with Procmon and Wireshark, unpacking, C2 protocol dissection, IOC extraction, and detection-rule writing (YARA, Sigma, KQL). On the offensive side I research EDR evasion, Windows internals, and syscall techniques — all within an authorized lab.</p>
+    </div>
+
+    <div class="section">
+      <h2>Areas</h2>
+      <div class="skill-grid">
+        <div class="skill-card">
+          <h3>Malware Analysis</h3>
+          <ul>
+            <li>Static + dynamic RE</li>
+            <li>Unpacking &amp; deobfuscation</li>
+            <li>C2 protocol dissection</li>
+            <li>IOC extraction</li>
+            <li>Maldoc / LNK / MSI chains</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>Reverse Engineering</h3>
+          <ul>
+            <li>IDA Pro, Ghidra, x64dbg</li>
+            <li>PE internals</li>
+            <li>.NET / Go / Rust / Delphi</li>
+            <li>Shellcode analysis</li>
+            <li>Frida + TinyTracer</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>Threat Intelligence</h3>
+          <ul>
+            <li>APT tracking</li>
+            <li>YARA / Sigma / KQL</li>
+            <li>ATT&amp;CK mapping</li>
+            <li>Pivot on infra / certs</li>
+            <li>TLP:CLEAR reporting</li>
+          </ul>
+        </div>
+        <div class="skill-card">
+          <h3>Offensive Research</h3>
+          <ul>
+            <li>EDR evasion techniques</li>
+            <li>Syscall &amp; NTDLL patching</li>
+            <li>Process injection</li>
+            <li>Windows internals</li>
+            <li>Authorized lab only</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Toolset</h2>
+      <div class="tool-block">
+        <div class="tool-block-label">Static</div>
+        <div class="tool-row">
+          <span class="tag">IDA Pro</span><span class="tag">Ghidra</span><span class="tag">PEStudio</span><span class="tag">DIE</span><span class="tag">FLOSS</span><span class="tag">CFF Explorer</span><span class="tag">dnSpy</span><span class="tag">de4dot</span>
+        </div>
+      </div>
+      <div class="tool-block">
+        <div class="tool-block-label">Dynamic</div>
+        <div class="tool-row">
+          <span class="tag">x64dbg</span><span class="tag">Procmon</span><span class="tag">Wireshark</span><span class="tag">Frida</span><span class="tag">TinyTracer</span><span class="tag">PE-Sieve</span><span class="tag">HollowsHunter</span>
+        </div>
+      </div>
+      <div class="tool-block">
+        <div class="tool-block-label">Detection</div>
+        <div class="tool-row">
+          <span class="tag">YARA</span><span class="tag">Sigma</span><span class="tag">KQL</span><span class="tag">VirusTotal</span><span class="tag">Shodan</span><span class="tag">Censys</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Posts</h2>
+      <div class="post-list">
+        <a href="/0X1/offensive/edr.html" class="post-row">
+          <div class="post-row-left">
+            <div class="eyebrow">Offensive Security</div>
+            <div class="title">EDR Evasion — Layers, Live</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+        <a href="/0X1/malware-analysis/bitter-apt.html" class="post-row">
+          <div class="post-row-left">
+            <div class="eyebrow">Malware Analysis · Threat Intel</div>
+            <div class="title">Nine Front Doors, One Toolkit</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+        <a href="/0X1/defensive/edr-evasion.html" class="post-row">
+          <div class="post-row-left">
+            <div class="eyebrow">Defensive Security</div>
+            <div class="title">The Cat-and-Mouse Game</div>
+          </div>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Disclaimer</h2>
+      <div class="disclaimer">
+        <strong>Authorized Research Only</strong>
+        All analysis is performed in an isolated, snapshot-protected lab environment. Offensive techniques are documented for educational and defensive purposes only. No code or technique published here should be used outside an authorized environment.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <p>© 2026 <a href="https://github.com/BlackXero1" target="_blank">BlackXero1</a> · <a href="/0X1/">0X1 Blog</a> · <a href="https://github.com/BlackXero1/0X1" target="_blank">GitHub</a></p>
+  </div>
+</footer>
+</body>
+</html>

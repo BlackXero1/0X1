@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — Page Not Found | 0X1</title>
+<style>
+:root{--bg:#08090D;--text:#D4DCE8;--text-muted:#7A8AA0;--accent:#00B4D8;--border:#1E2A40;--code-bg:#0B0D13;--code-text:#CDD5E0;--hero-bytes:#79D4F1}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+.code{font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:clamp(72px,15vw,140px);font-weight:900;letter-spacing:-.06em;line-height:1;color:var(--accent);opacity:.15;user-select:none;margin-bottom:-20px}
+h1{font-size:clamp(22px,4vw,32px);font-weight:700;letter-spacing:-.03em;margin-bottom:12px}
+p{font-size:15px;color:var(--text-muted);max-width:380px;line-height:1.65;margin-bottom:32px}
+.bytes{font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:11px;color:var(--hero-bytes);opacity:.4;letter-spacing:.06em;margin-bottom:40px;line-height:2}
+.btn{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--border);border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;color:var(--accent);text-decoration:none;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent);background:rgba(0,180,216,.08)}
+.links{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.links a{font-size:13px;color:var(--text-muted);text-decoration:none}
+.links a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="code">404</div>
+<h1>Page Not Found</h1>
+<p>The page you're looking for doesn't exist or was moved. All posts live under <code style="color:var(--accent);font-family:monospace">/0X1/</code></p>
+<div class="bytes">
+  48 C7 C0 FF FF FF FF · syscall · ret<br>
+  NTSTATUS 0xC0000034 — OBJECT_NAME_NOT_FOUND
+</div>
+<a href="/0X1/" class="btn">← Back to 0X1</a>
+<div class="links">
+  <a href="/0X1/offensive/edr.html">EDR Evasion</a>
+  <a href="/0X1/malware-analysis/bitter-apt.html">Bitter APT</a>
+  <a href="/0X1/defensive/edr-evasion.html">Cat-and-Mouse</a>
+</div>
+</body>
+</html>
