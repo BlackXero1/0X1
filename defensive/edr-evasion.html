@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Cat-and-Mouse Game — 0X1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Fira+Code:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #0D1017;
+  --surface: #141821;
+  --surface-alt: #1A1F2B;
+  --surface-raised: #1E2535;
+  --text: #C9CFD9;
+  --text-dim: #6A7389;
+  --text-bright: #E8ECF2;
+  --accent: #5B9CF6;
+  --accent-dim: rgba(91,156,246,0.12);
+  --amber: #D49A4E;
+  --amber-dim: rgba(212,154,78,0.10);
+  --red: #E06060;
+  --green: #5CC98A;
+  --border: #212738;
+  --code-bg: #161B26;
+  --code-text: #B8C4D4;
+  --table-header: #171C28;
+  --table-stripe: rgba(255,255,255,0.02);
+  --font-display: 'Instrument Sans', system-ui, sans-serif;
+  --font-body: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
+  --font-mono: 'Fira Code', 'Consolas', monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F4F5F8;
+    --surface: #FFFFFF;
+    --surface-alt: #E9EBF0;
+    --surface-raised: #DFE2EA;
+    --text: #1C1F28;
+    --text-dim: #5E6577;
+    --text-bright: #0D0F14;
+    --accent: #2B6CE6;
+    --accent-dim: rgba(43,108,230,0.08);
+    --amber: #A06E1D;
+    --amber-dim: rgba(160,110,29,0.08);
+    --red: #C04040;
+    --green: #2A8C54;
+    --border: #D0D4DE;
+    --code-bg: #ECEEF3;
+    --code-text: #3A4255;
+    --table-header: #E4E7ED;
+    --table-stripe: rgba(0,0,0,0.02);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1017;
+  --surface: #141821;
+  --surface-alt: #1A1F2B;
+  --surface-raised: #1E2535;
+  --text: #C9CFD9;
+  --text-dim: #6A7389;
+  --text-bright: #E8ECF2;
+  --accent: #5B9CF6;
+  --accent-dim: rgba(91,156,246,0.12);
+  --amber: #D49A4E;
+  --amber-dim: rgba(212,154,78,0.10);
+  --red: #E06060;
+  --green: #5CC98A;
+  --border: #212738;
+  --code-bg: #161B26;
+  --code-text: #B8C4D4;
+  --table-header: #171C28;
+  --table-stripe: rgba(255,255,255,0.02);
+}
+:root[data-theme="light"] {
+  --bg: #F4F5F8;
+  --surface: #FFFFFF;
+  --surface-alt: #E9EBF0;
+  --surface-raised: #DFE2EA;
+  --text: #1C1F28;
+  --text-dim: #5E6577;
+  --text-bright: #0D0F14;
+  --accent: #2B6CE6;
+  --accent-dim: rgba(43,108,230,0.08);
+  --amber: #A06E1D;
+  --amber-dim: rgba(160,110,29,0.08);
+  --red: #C04040;
+  --green: #2A8C54;
+  --border: #D0D4DE;
+  --code-bg: #ECEEF3;
+  --code-text: #3A4255;
+  --table-header: #E4E7ED;
+  --table-stripe: rgba(0,0,0,0.02);
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+.page { max-width: 820px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+h1 {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-bright);
+  margin: 0 0 0.3rem;
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin: 0 0 1.5rem;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.meta-item { white-space: nowrap; }
+.meta-label { color: var(--text-dim); opacity: 0.7; }
+.meta-val { color: var(--text); font-weight: 500; }
+.tlp { color: var(--green); font-weight: 600; }
+
+h2 {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin: 3rem 0 1rem;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+  padding-top: 1rem;
+}
+h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 1.8rem 0 0.6rem;
+  letter-spacing: 0.01em;
+}
+h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 1.2rem 0 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+p { margin: 0 0 1rem; max-width: 72ch; }
+strong { color: var(--text-bright); font-weight: 600; }
+em { font-style: italic; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.technique {
+  border-left: 3px solid var(--accent);
+  padding-left: 1.2rem;
+  margin: 2.5rem 0;
+}
+.technique h2 {
+  margin-top: 0;
+  padding-top: 0;
+}
+.technique-meta {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+.technique-meta strong { color: var(--text); font-family: var(--font-display); }
+
+.thesis-block {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 1.6rem 2rem;
+  margin: 2rem 0 2.5rem;
+}
+.thesis-block p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--text-bright);
+}
+.thesis-block p:first-child {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+blockquote {
+  border-left: 3px solid var(--amber);
+  background: var(--amber-dim);
+  margin: 1.2rem 0;
+  padding: 1rem 1.4rem;
+  border-radius: 0 4px 4px 0;
+}
+blockquote p { margin: 0; color: var(--text-bright); }
+blockquote p + p { margin-top: 0.6rem; }
+blockquote strong { color: var(--amber); }
+
+.table-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; border-radius: 4px; border: 1px solid var(--border); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+th {
+  background: var(--table-header);
+  color: var(--text-bright);
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.7rem 1rem;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid var(--border);
+}
+td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:nth-child(even) td { background: var(--table-stripe); }
+td code, th code {
+  background: var(--code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  margin: 1rem 0 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--code-text);
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  color: var(--code-text);
+}
+pre code { background: none; padding: 0; font-size: 1em; }
+
+ul, ol { padding-left: 1.4rem; margin: 0.5rem 0 1rem; }
+li { margin-bottom: 0.4rem; }
+li::marker { color: var(--text-dim); }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
+}
+
+.chain {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.8rem 1.2rem;
+  margin: 0.6rem 0 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.chain-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+.chain .arrow { color: var(--accent); }
+
+.checklist { list-style: none; padding-left: 0; counter-reset: cl; }
+.checklist li {
+  counter-increment: cl;
+  padding-left: 2.2rem;
+  position: relative;
+  margin-bottom: 1rem;
+}
+.checklist li::before {
+  content: counter(cl, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent);
+  top: 0.15em;
+}
+
+.mistakes { counter-reset: mk; }
+.mistakes .mistake {
+  counter-increment: mk;
+  padding-left: 2rem;
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+.mistakes .mistake::before {
+  content: counter(mk);
+  position: absolute;
+  left: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--red);
+  top: 0;
+}
+
+.neg-list { list-style: none; padding-left: 0; }
+.neg-list li { padding-left: 1.2rem; position: relative; margin-bottom: 0.3rem; }
+.neg-list li::before { content: "—"; position: absolute; left: 0; color: var(--text-dim); }
+
+.conclusion-block {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin: 2rem 0;
+}
+.conclusion-block .thesis {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.conclusion-block .closer {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.ref-section { margin-bottom: 1.5rem; }
+.ref-section h4 { margin-bottom: 0.5rem; }
+.ref-section ul { list-style: none; padding-left: 0; }
+.ref-section li { padding-left: 0; margin-bottom: 0.4rem; font-size: 0.9rem; }
+.ref-section li::before { display: none; }
+
+.flow-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+  text-align: center;
+  color: var(--text-dim);
+}
+.flow-diagram strong { color: var(--accent); }
+
+@media (max-width: 600px) {
+  h1 { font-size: 2rem; }
+  .subtitle { font-size: 1rem; }
+  h2 { font-size: 1.3rem; }
+  body { font-size: 16px; }
+  .page { padding: 2rem 1rem 3rem; }
+  .technique { padding-left: 0.8rem; }
+  .thesis-block { padding: 1.2rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<nav style="background:var(--bg,#f8f9fa);border-bottom:1px solid var(--border,#dde);padding:12px 0;position:sticky;top:0;z-index:100">
+  <div style="max-width:900px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <a href="/" style="font-size:17px;font-weight:800;letter-spacing:-.03em;color:var(--text,#111);text-decoration:none"><span style="color:var(--accent,#0369a1)">0X</span>1</a>
+    <div style="display:flex;gap:20px">
+      <a href="/" style="font-size:13px;font-weight:600;color:var(--text-muted,#555);text-decoration:none">← Home</a>
+      <a href="/0X1/defensive/edr-evasion.html" style="font-size:13px;font-weight:600;color:var(--accent,#0369a1);text-decoration:none">Defensive</a>
+      <a href="https://github.com/BlackXero1/0X1" target="_blank" style="font-size:13px;font-weight:600;color:var(--text-muted,#555);text-decoration:none">GitHub</a>
+    </div>
+    <button style="background:none;border:1px solid var(--border,#dde);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text-muted,#555);cursor:pointer" onclick="(function(){const r=document.documentElement;const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');localStorage.setItem('theme',r.getAttribute('data-theme'))})()">◑</button>
+  </div>
+</nav>
+<script>(function(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
+
+<div class="page">
+
+<h1>The Cat-and-Mouse Game</h1>
+<p class="subtitle">EDR Evasion in the Wild: What Attackers Blind — and What Defenders Can Still See</p>
+
+<div class="meta">
+  <span class="meta-item"><span class="meta-label">Date </span><span class="meta-val">24 August 2026</span></span>
+  <span class="meta-item"><span class="meta-label">Classification </span><span class="meta-val tlp">TLP:CLEAR</span></span>
+  <span class="meta-item"><span class="meta-label">Audience </span><span class="meta-val">SOC Analysts · Detection Engineers · Threat Hunters</span></span>
+  <span class="meta-item"><span class="meta-label">Perspective </span><span class="meta-val">Defensive Detection Engineering</span></span>
+  <span class="meta-item"><span class="meta-label">Scope </span><span class="meta-val">Windows endpoint telemetry and EDR evasion</span></span>
+</div>
+
+<p>An EDR is not a single sensor sitting between an attacker and the operating system.</p>
+
+<p>It is a collection of telemetry sources, prevention mechanisms, memory inspection capabilities, behavioral analytics, and cloud correlation operating at different layers.</p>
+
+<p>Attackers increasingly target individual layers of that visibility: AMSI, user-mode ETW, ntdll hooks, memory scanners, process ancestry, and thread-creation telemetry.</p>
+
+<p>But bypassing one sensor does not make the underlying behavior disappear.</p>
+
+<p><strong>A process can hide an API call. It cannot hide the operation it ultimately needs to perform.</strong></p>
+
+<p>A payload can encrypt its memory while sleeping, but it must eventually decrypt and execute. A forged parent can disguise ancestry, but independent telemetry may expose inconsistencies. Direct syscalls can bypass user-mode hooks, but they do not make the resulting kernel operation cease to exist.</p>
+
+<p><strong>That is the real EDR cat-and-mouse game: not visibility versus invisibility, but telemetry versus telemetry reduction.</strong></p>
+
+<div class="thesis-block">
+  <p>EDR evasion is not invisibility. It is telemetry reduction.</p>
+  <p>Attackers increasingly target individual observation layers — AMSI, user-mode ETW, ntdll hooks, memory scanners, process ancestry, and thread-creation telemetry. The defensive response is not to depend on a single sensor, but to correlate independent process, memory, file, identity, and network observations.</p>
+</div>
+
+<hr>
+
+<h2>How EDR Telemetry Actually Works</h2>
+<p>Before discussing evasion, understand the layers an EDR can draw from:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Layer</th><th>Examples</th><th>Can user-mode code directly interfere?</th></tr></thead>
+<tbody>
+<tr><td>User-mode hooks</td><td>ntdll inline hooks, IAT hooks</td><td><strong>Often</strong></td></tr>
+<tr><td>AMSI</td><td>AmsiScanBuffer</td><td><strong>Potentially</strong></td></tr>
+<tr><td>User-mode ETW</td><td>EtwEventWrite path</td><td><strong>Potentially</strong></td></tr>
+<tr><td>Kernel callbacks</td><td>Process/object/file callbacks</td><td><strong>Generally not from ordinary user-mode code, assuming the relevant kernel instrumentation is deployed and functioning</strong></td></tr>
+<tr><td>Kernel telemetry</td><td>ETW-TI, kernel providers</td><td><strong>Generally not from ordinary user-mode code, assuming the relevant kernel instrumentation is deployed and functioning</strong></td></tr>
+<tr><td>Memory inspection</td><td>Periodic memory scanning</td><td><strong>Timing-dependent</strong></td></tr>
+<tr><td>Network telemetry</td><td>DNS, proxy, TLS metadata</td><td><strong>Usually not from the endpoint alone</strong></td></tr>
+<tr><td>Cloud correlation</td><td>Cross-endpoint analytics</td><td><strong>No, assuming telemetry arrives</strong></td></tr>
+</tbody></table></div>
+
+<p><strong>Key insight:</strong> Most evasion techniques in this article bypass one or two of these layers, not all of them. The article distinguishes between user-mode telemetry bypass and complete visibility loss.</p>
+
+<h3>Scope &amp; Limitations</h3>
+<p>This article focuses on user-mode evasion against Windows endpoint telemetry. It does not claim that every EDR implements the telemetry layers described here, nor that kernel telemetry is universally available or immune to sensor failure, privileged compromise, or configuration gaps. Detection examples are conceptual unless explicitly identified as product-specific.</p>
+
+<h3>Evidence Classification</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Rating</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><strong>Observed in the wild</strong></td><td>Documented in a real intrusion, malware sample, or authoritative threat-intelligence report</td></tr>
+<tr><td><strong>Publicly implemented</strong></td><td>Demonstrated in publicly available offensive/security-research tooling</td></tr>
+<tr><td><strong>Reproduced in lab</strong></td><td>Independently reproduced by the author in a controlled environment</td></tr>
+<tr><td><strong>Behavior reviewed</strong></td><td>Behavior examined from an existing public implementation without independently reproducing the technique</td></tr>
+</tbody></table></div>
+
+<hr>
+
+<h2>What EDR Evasion Does — and Does Not — Give the Attacker</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Attacker achieves</th><th>Attacker does <strong>not</strong> automatically achieve</th></tr></thead>
+<tbody>
+<tr><td>Bypass of a user-mode hook</td><td>Kernel invisibility</td></tr>
+<tr><td>Suppression of AMSI in one process</td><td>Elimination of behavioral telemetry</td></tr>
+<tr><td>Suppression of user-mode ETW</td><td>Removal of previously collected events</td></tr>
+<tr><td>Removal of ntdll inline hooks</td><td>Removal of kernel observation</td></tr>
+<tr><td>Encrypted sleeping memory</td><td>Permanent memory invisibility</td></tr>
+<tr><td>Spoofed PPID</td><td>Guaranteed invisible process creation</td></tr>
+<tr><td>Direct syscall execution</td><td>Invisible kernel operations</td></tr>
+<tr><td>Fiber-based execution</td><td>Invisible network/file activity</td></tr>
+<tr><td>Encrypted payload</td><td>Invisible execution</td></tr>
+</tbody></table></div>
+<p>This table frames every technique that follows. Each section below examines one row in detail: what the attacker targets, what telemetry they reduce, and what independent observation remains available to defenders.</p>
+
+<hr>
+
+<h2>The Detection Engineering Rule: Correlate Across Layers</h2>
+<p>EDR evasion is usually telemetry reduction, not invisibility.</p>
+<p>The practical question for defenders is therefore not <em>"Did the attacker bypass the EDR?"</em> but <strong>"Which telemetry source did they bypass, which independent sources remain, and can we correlate them?"</strong></p>
+<p>A single evasion artifact rarely provides enough evidence by itself. The strongest detections combine <strong>process, memory, file, identity, and network telemetry</strong>.</p>
+
+<div class="chain-label">AMSI modification:</div>
+<div class="chain">PowerShell process <span class="arrow">→</span> suspicious memory write <span class="arrow">→</span> amsi.dll modification <span class="arrow">→</span> missing/abnormal AMSI telemetry <span class="arrow">→</span> outbound connection</div>
+<div class="chain-label">Sleep obfuscation:</div>
+<div class="chain">Private executable memory <span class="arrow">→</span> protection change <span class="arrow">→</span> encrypted/modified region <span class="arrow">→</span> repeated timing <span class="arrow">→</span> network beacon</div>
+<div class="chain-label">Process hollowing:</div>
+<div class="chain">Suspended process creation <span class="arrow">→</span> cross-process memory access <span class="arrow">→</span> image modification <span class="arrow">→</span> execution from inconsistent memory <span class="arrow">→</span> network activity</div>
+<div class="chain-label">PPID spoofing:</div>
+<div class="chain">Claimed parent <span class="arrow">→</span> token mismatch <span class="arrow">→</span> unusual handle access <span class="arrow">→</span> command-line anomaly <span class="arrow">→</span> independent creator telemetry</div>
+<div class="chain-label">Direct syscall:</div>
+<div class="chain">Unusual executable memory/call context <span class="arrow">→</span> native operation <span class="arrow">→</span> kernel-observed activity <span class="arrow">→</span> suspicious downstream behavior</div>
+
+<p>The important detection is not the individual API call. It is the <strong>behavioral sequence</strong>. Effective detection engineering models <strong>dependencies between attacker actions</strong>, not just individual artifacts — because evasion removes artifacts, but it cannot remove the dependencies between the steps an attacker must take.</p>
+
+<hr>
+
+<!-- TECHNIQUE 01 -->
+<div class="technique">
+<h2>Technique 01: Anti-Analysis Evasion</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1497 (Virtualization/Sandbox Evasion), T1622 (Debugger Evasion)<br>
+<strong>Evidence:</strong> Observed in the wild + reproduced in lab
+</div>
+<h3>What the attacker does</h3>
+<p>Reads PEB fields such as BeingDebugged and NtGlobalFlag, and heap ForceFlags directly from memory — no API calls. These offsets are architecture- and Windows-version-dependent; implementations target the specific PEB layout of the intended platform. RDTSC/QPC-based timing comparisons can detect execution delays associated with debugging, instrumentation, or virtualization. <code>CPUID</code> leaf <code>0x40000000</code> can expose hypervisor/vendor identification information that malware may use as a virtualization indicator.</p>
+<h3>What it bypasses</h3>
+<ul><li>User-mode API hooks (no API call made — direct memory read)</li><li>Sandbox/analysis environment detection</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Process creation (Sysmon EID 1, Windows Security EID 4688)</li><li>Process termination (Sysmon EID 5, Windows Security EID 4689) — correlate short-lived processes with suspicious parents</li><li>Process-creation callbacks can remain available to security products independently of user-mode hooks, provided the relevant kernel telemetry is deployed and functioning</li></ul>
+<h3>Detection opportunities</h3>
+<p><strong>Environment-discovery execution pattern:</strong> A short-lived process that performs environment discovery, timing checks, virtualization checks, or debugger detection before terminating is a stronger signal of sandbox or debugger evasion than short execution time alone. Legitimate installers, updaters, CLI tools, and helper processes also exhibit short-lived execution, so do not treat a specific time threshold as a universal detection rule. This is a behavioral pattern requiring correlation, not a single event.</p>
+<h3>Defensive controls</h3>
+<p><strong>Sandbox realism</strong> — configure analysis VMs with:</p>
+<ul><li>4+ logical CPUs and 8+ GB RAM</li><li>1920x1080+ screen resolution</li><li>Realistic uptime (not freshly booted)</li><li>Installed browser with history, documents in user folders</li><li>Mouse/keyboard activity simulation</li><li>Hypervisor fingerprint reduction: minimize exposed virtualization artifacts</li><li>Correct locale/timezone for target region</li></ul>
+</div>
+
+<!-- TECHNIQUE 02 -->
+<div class="technique">
+<h2>Technique 02: AMSI Tampering</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1562.001 (Impair Defenses: Disable or Modify Tools)<br>
+<strong>Evidence:</strong> Observed in the wild + publicly implemented
+</div>
+<h3>What the attacker does</h3>
+<p>Modifies the in-memory implementation of <code>AmsiScanBuffer</code> in <code>amsi.dll</code> so that calls return without performing the expected scan. One commonly observed patch pattern replaces the function prologue with a short return sequence (e.g., <code>xor eax,eax; ret</code>), although the exact patch varies across implementations and Windows builds.</p>
+<p>Note: <code>AmsiScanBuffer</code> returns an HRESULT; the scan result is delivered through the <code>[out] AMSI_RESULT*</code> parameter. Applications should use <code>AmsiResultIsMalware()</code> to evaluate the result. The patch prevents the scan function body from executing at all.</p>
+<h3>What it bypasses</h3>
+<ul><li>AMSI user-mode scanning path within the compromised process</li><li>PowerShell, .NET, and other AMSI-integrated application scanning</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Kernel-level telemetry available to the EDR may continue to observe process, memory, file, or downstream behavioral activity independently of the AMSI scanning path</li><li>EDR products may have additional behavioral, memory, or cloud-based detection independent of the modified AMSI call path</li><li>Memory scanning can detect the modified function prologue</li></ul>
+<h3>Detection opportunities</h3>
+<p><strong>Illustrative memory-scanning logic:</strong></p>
+<pre><code>rule AMSI_Prologue_Modified {
+    meta:
+        description = "Illustrative logic for AmsiScanBuffer prologue modification"
+        severity = "HIGH"
+        note = "Validate against target Windows build - prologue varies"
+    strings:
+        $patch1 = { 31 C0 C3 }        // xor eax,eax; ret
+        $patch2 = { B8 57 00 07 80 }   // mov eax, 0x80070057; (E_INVALIDARG)
+        $amsi   = "AmsiScanBuffer" ascii wide
+    condition:
+        any of ($patch*) and $amsi
+}</code></pre>
+<p><strong>Important:</strong> This rule searches for the patch bytes and function name independently — it does not verify the patch is located at the <code>AmsiScanBuffer</code> function address. A production rule should resolve the function address from the loaded module and validate the bytes at that address.</p>
+<h3>Defensive controls</h3>
+<ul><li>Enable VBS/HVCI and other platform integrity controls where compatible</li><li>Use EDR capabilities that detect in-memory modification of security-sensitive modules</li><li>Monitor for writable/executable memory transitions and modifications to loaded security-related DLLs</li><li>Baseline AMSI-integrated application behavior and investigate suspicious gaps</li></ul>
+</div>
+
+<!-- TECHNIQUE 03 -->
+<div class="technique">
+<h2>Technique 03: ETW Tampering</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1562.001 (Impair Defenses: Disable or Modify Tools)<br>
+<strong>Evidence:</strong> Observed in the wild + publicly implemented
+</div>
+<h3>What the attacker does</h3>
+<p>Writes a single <code>0xC3</code> (ret) byte at the entry point of <code>EtwEventWrite</code> in <code>ntdll.dll</code>. This suppresses ETW events generated through that user-mode path within the compromised process.</p>
+<p>Microsoft documents <code>EtwEventWrite</code> as internal to the operating system and subject to change from one release of Windows to another.</p>
+<h3>What it bypasses</h3>
+<ul><li>User-mode ETW event generation through the patched <code>EtwEventWrite</code> path</li><li>May suppress user-mode ETW events generated through the affected process's patched path, potentially including telemetry associated with PowerShell activity (EID 4104) and other user-mode provider events. This does not mean that all ETW telemetry generated by Windows or other processes is suppressed</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Telemetry generated independently of the compromised process's user-mode ETW path may remain available, depending on the provider and collection architecture</li><li>Events already forwarded to a SIEM before the patch was applied</li><li>Events from other processes (the patch only affects the patching process)</li></ul>
+<h3>Detection opportunities</h3>
+<blockquote><p><strong>Missing telemetry is evidence of a visibility gap, not proof of ETW tampering.</strong></p></blockquote>
+<p><strong>Absence of expected telemetry is a signal, but requires correlation:</strong></p>
+<p>A PowerShell process that normally generates Script Block Logging events (EID 4104) but produces none during its lifetime — while also exhibiting suspicious execution behavior (unusual parent, unsigned binary, network activity) — should be investigated for telemetry tampering, policy misconfiguration, or alternate execution paths.</p>
+<p>Do not treat missing EID 4104 alone as proof of ETW patching. Legitimate causes include: Constrained Language Mode, group policy changes, PowerShell version differences, and logging configuration.</p>
+<p><strong>Recommended approach:</strong> Baseline expected ETW event rates per process type over 2+ weeks. Alert on statistically significant deviations combined with other suspicious indicators.</p>
+<h3>Defensive controls</h3>
+<ul><li>Where available, rely on kernel-level ETW providers which operate independently of user-mode patching</li><li>Forward logs to a remote SIEM immediately — an attacker who patches ETW cannot retroactively delete events that were already successfully received and retained by an independently controlled SIEM</li><li>Ask the EDR vendor which kernel-level telemetry sources they use and whether ETW-TI is part of that telemetry architecture</li></ul>
+</div>
+
+<!-- TECHNIQUE 04 -->
+<div class="technique">
+<h2>Technique 04: NTDLL Unhooking</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1562.001 (Impair Defenses: Disable or Modify Tools)<br>
+<strong>Evidence:</strong> Publicly implemented + behavior reviewed
+</div>
+<h3>What the attacker does</h3>
+<p>Maps a fresh copy of <code>ntdll.dll</code> from disk using <code>CreateFileMapping</code> with <code>SEC_IMAGE</code>, locates the <code>.text</code> section, and overwrites part or all of the in-memory (potentially hooked) <code>.text</code> with the clean on-disk copy. The exact scope of the overwrite varies by implementation.</p>
+<h3>What it bypasses</h3>
+<ul><li>Inline hooks present in ntdll's <code>.text</code> section at the time of overwrite</li><li>EDR interception of Nt* function calls that relied on those specific hooks</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Kernel callbacks (PsSetCreateProcessNotifyRoutineEx, ObRegisterCallbacks, MiniFilter) — these can remain available to security products at kernel level, provided the relevant drivers are deployed and functioning</li><li>File access audit — the process opens <code>ntdll.dll</code> as a file</li><li>Memory mapping, section replacement, or protection changes associated with the affected ntdll region may provide supporting evidence, depending on implementation</li><li>Image-load telemetry (Sysmon EID 7) may provide supporting evidence</li></ul>
+<h3>Detection opportunities</h3>
+<blockquote><p><strong>The detection rules in this article are conceptual, not production-ready Sigma rules.</strong> Field names, event sources, and available telemetry vary by EDR, Sysmon configuration, Windows version, and collection architecture.</p></blockquote>
+<p><strong>Multi-event correlation (conceptual Sigma-style logic):</strong></p>
+<p>Correlate the following sequence within a single process:</p>
+<ol><li>File access to <code>\Windows\System32\ntdll.dll</code> (not by a system process)</li><li>SEC_IMAGE file mapping creation</li><li>Memory protection change (PAGE_EXECUTE_WRITECOPY) on a region overlapping ntdll's loaded address range</li><li>A substantial write or section replacement affecting the loaded ntdll <code>.text</code> region</li></ol>
+<p>Each event alone has legitimate explanations. The sequence together is high-confidence.</p>
+<h3>Defensive controls</h3>
+<ul><li>Invest in EDR products with kernel-mode drivers using kernel callbacks and MiniFilter drivers — these are not affected by ntdll unhooking</li><li>Enable Kernel Data Protection (KDP) on supported hardware</li><li>User-mode hooks are fundamentally removable by any ring-3 code — do not treat them as a reliable sole detection mechanism</li></ul>
+</div>
+
+<!-- TECHNIQUE 05 -->
+<div class="technique">
+<h2>Technique 05: Sleep Obfuscation (Ekko-style)</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1497.003 (Virtualization/Sandbox Evasion: Time Based Checks)<br>
+<strong>Evidence:</strong> Publicly implemented (5pider/Ekko) + behavior reviewed
+</div>
+<p style="font-size:0.85rem;color:var(--text-dim);">Note: in-memory encryption during sleep should not automatically be mapped to T1027 or T1027.013 unless the implementation includes obfuscation of file content covered by that technique; T1027.013 specifically concerns encrypted or encoded file content on disk or during delivery.</p>
+<h3>What the attacker does</h3>
+<p>Before entering a C2 beacon sleep, the implant may encrypt or otherwise transform selected executable memory regions (using XOR, AES, RC4, or other mechanisms), flip page protection (commonly to <code>PAGE_NOACCESS</code>), and sleep. During the sleep window, a scanner that encounters the protected region may be unable to inspect the plaintext code, reducing the effectiveness of signature-based memory scanning during that interval.</p>
+<h3>What it bypasses</h3>
+<ul><li>Memory scanning during the sleep window (encryption combined with inaccessible page protections can substantially reduce the usefulness of memory pattern matching during the sleep interval)</li><li>Static shellcode signatures in memory</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Memory protection transition events — the encrypt/decrypt cycle requires VirtualProtect calls</li><li>The plaintext window between wake-up and re-encryption</li><li>Network beaconing pattern (the implant must communicate eventually)</li></ul>
+<h3>Detection opportunities</h3>
+<p><strong>Memory protection cycling:</strong> A private executable region that transitions between executable and NOACCESS states repeatedly is unusual and should be investigated, particularly when combined with encryption/decryption activity and periodic network beaconing.</p>
+<p>This transition can occur in legitimate software (JIT compilers, game engines, security products), so treat it as a triage signal requiring correlation, not a standalone detection.</p>
+<p><strong>Telemetry source:</strong> Where the EDR or telemetry stack collects suitable kernel virtual-memory events, memory-protection transitions may be observable through kernel instrumentation and relevant ETW providers (such as <code>Microsoft-Windows-Kernel-VirtualMemory</code>). Note: Sysmon EID 10 is ProcessAccess (confirmed by Microsoft documentation), not a generic VirtualProtect event — do not conflate them.</p>
+<pre><code>title: Suspicious Memory Protection Cycling on Private Executable Region
+status: experimental
+description: >
+    Detects repeated VirtualProtect transitions from executable to NOACCESS
+    on the same private memory region, which may indicate sleep obfuscation.
+logsource:
+    category: process_tampering   # requires EDR/ETW memory telemetry
+    product: windows
+detection:
+    selection:
+        EventType: 'ProtectionChange'
+        NewProtection: 'PAGE_NOACCESS'
+        OldProtection|contains:
+            - 'PAGE_EXECUTE_READWRITE'
+            - 'PAGE_EXECUTE_READ'
+        MemoryType: 'Private'
+    condition: selection | count() by ProcessId, BaseAddress > 2
+level: high
+falsepositives:
+    - JIT compilers
+    - Game anti-cheat engines
+    - Security software self-protection
+note: >
+    This rule requires EDR memory telemetry that logs VirtualProtect
+    transitions. Standard Sysmon does not produce this event.</code></pre>
+<h3>Defensive controls</h3>
+<ul><li>Use the shortest practical periodic memory-scanning interval supported by the EDR and environment</li><li>Alert on repeated protection cycling on the same private executable region</li><li>Correlate with network beaconing patterns — an implant that sleeps must eventually wake and communicate</li></ul>
+</div>
+
+<!-- TECHNIQUE 06 -->
+<div class="technique">
+<h2>Technique 06: Direct Syscalls (Hell's Gate / Tartarus Gate)</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1106 (Native API)<br>
+<strong>Evidence:</strong> Publicly implemented + behavior reviewed
+</div>
+<p>Direct syscalls are primarily an <strong>interception-evasion mechanism</strong> — they bypass a specific telemetry collection point, not the underlying operation itself. The technique is not inherently malicious; it is the context in which it is used that determines intent.</p>
+<h3>What the attacker does</h3>
+<p>Instead of calling Nt* functions through ntdll.dll (where EDR hooks live), the attacker resolves the System Service Number (SSN) by reading the stub bytes directly from ntdll's export table, then issues a raw <code>syscall</code> instruction. The kernel receives the call normally, but the EDR's user-mode hook is never on the call path.</p>
+<p>Tartarus Gate extends this: if the target stub is hooked, the SSN is inferred from neighboring unhooked stubs by ordinal offset.</p>
+<p><strong>Direct syscalls do not hide the resulting kernel operation; they primarily remove a user-mode interception point.</strong></p>
+<blockquote><p><strong>Defender takeaway:</strong> If your EDR relies solely on user-mode ntdll hooks for visibility into Nt* calls, direct syscalls render that telemetry layer unreliable. Prioritize kernel-level telemetry sources (ETW-TI, kernel callbacks) that observe the operation regardless of how it was invoked.</p></blockquote>
+<h3>What it bypasses</h3>
+<ul><li>The specific ntdll hooks that would otherwise intercept the targeted call</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Kernel callbacks — PsSetCreateProcessNotifyRoutineEx, ObRegisterCallbacks, MiniFilter drivers may remain available regardless of how the system call was issued, depending on the EDR architecture, enabled providers, sensor health, and configuration</li><li>Where supported and collected, ETW Threat Intelligence (ETW-TI) can provide kernel-level telemetry relevant to system-call and threat activity</li><li>Depending on the EDR's kernel instrumentation and call-stack collection capabilities, a syscall whose user-mode return/call context points outside expected system-call stubs may provide an anomalous signal</li></ul>
+<h3>Detection opportunities</h3>
+<ul><li>EDR products with kernel telemetry (ETW-TI, kernel callbacks) may still observe the operation — they lose the user-mode call stack context but may retain the event itself, depending on EDR architecture, enabled providers, sensor health, and configuration</li><li>Call stack analysis: depending on sensor capabilities, a syscall return address pointing outside ntdll may be detectable as anomalous by kernel instrumentation</li></ul>
+<h3>CET (Control-flow Enforcement Technology) — nuance</h3>
+<p>CET provides hardware-enforced shadow stack protection on Intel 11th gen+ and AMD Zen 3+. It hardens control flow integrity but should be treated as a <strong>hardening control, not a dedicated direct-syscall detection mechanism</strong>.</p>
+<h3>Defensive controls</h3>
+<ul><li>Prioritize EDR vendors with kernel telemetry (ETW-TI, kernel callbacks) over those relying solely on user-mode hooks</li><li>Enable CET where hardware supports it — defense-in-depth, not a silver bullet</li><li>Direct syscalls make user-mode-hook-only EDR telemetry unreliable — design detection around kernel and network signals</li></ul>
+</div>
+
+<!-- TECHNIQUE 07 -->
+<div class="technique">
+<h2>Technique 07: Process Injection — Early Bird APC</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1055.004 (Process Injection: Asynchronous Procedure Call)<br>
+<strong>Evidence:</strong> Observed in the wild + reproduced in lab
+</div>
+<p>MITRE documents Early Bird as a variation where "malicious code can be written and executed before the process' entry point (and potentially subsequent anti-malware hooks)."</p>
+<h3>What the attacker does</h3>
+<p>Creates a target process (notepad, svchost) with <code>CREATE_SUSPENDED</code>. Allocates memory and writes shellcode via <code>VirtualAllocEx + WriteProcessMemory</code> (or Nt* equivalents). Queues an APC to the main thread via <code>QueueUserAPC</code>, then resumes the thread. The technique can execute code before some target-process user-mode instrumentation has initialized, depending on the security product and injection path.</p>
+<h3>What it bypasses</h3>
+<ul><li>EDR user-mode instrumentation in the target process (the APC can execute before the EDR DLL initializes, depending on the product)</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Process creation (Sysmon EID 1, Windows Security EID 4688) — the suspended process creation is visible</li><li>Process access (Sysmon EID 10) — cross-process handle operations with suspicious access rights</li><li>Process-creation callbacks can remain available to security products at kernel level, provided the relevant drivers are deployed</li></ul>
+<h3>Important Sysmon EID corrections</h3>
+<ul><li><strong>EID 8 (CreateRemoteThread):</strong> QueueUserAPC itself is not what Sysmon EID 8 records; EID 8 specifically records CreateRemoteThread activity. APC injection uses a different API path.</li><li><strong>EID 10 (ProcessAccess)</strong> logs cross-process handle operations with specific access rights. It does NOT log VirtualProtect calls.</li></ul>
+<h3>Detection opportunities</h3>
+<p><strong>Correlate the injection sequence across multiple events:</strong></p>
+<ol><li>Sysmon EID 1 / Windows Security EID 4688: Process created (check for unexpected parent-child relationships)</li><li>EID 10: Cross-process access with suspicious GrantedAccess flags (PROCESS_VM_WRITE, PROCESS_VM_OPERATION)</li><li>Correlate process creation with available cross-process access, memory-operation telemetry, and subsequent execution/resumption behavior where the EDR provides those events</li></ol>
+<pre><code>title: Suspicious Cross-Process Memory Access Pattern
+status: experimental
+description: >
+    Detects cross-process access with memory write permissions from
+    unexpected source processes, which may indicate injection.
+logsource:
+    category: process_access
+    product: windows
+detection:
+    selection:
+        GrantedAccess|contains:
+            - '0x1FFFFF'    # PROCESS_ALL_ACCESS
+            - '0x1F0FFF'    # PROCESS_ALL_ACCESS (alternate)
+    filter_system:
+        SourceImage|startswith:
+            - 'C:\Windows\System32\'
+            - 'C:\Program Files\'
+    filter_edr:
+        SourceImage|contains: 'Security'  # adjust for your EDR
+    condition: selection and not 1 of filter_*
+level: high
+note: >
+    This detects suspicious cross-process access patterns. It does NOT
+    specifically detect APC injection — correlate with process creation
+    and behavioral analysis for higher confidence.
+falsepositives:
+    - Debuggers
+    - Security products
+    - Development tools</code></pre>
+<h3>Defensive controls</h3>
+<ul><li>Use Windows Exploit Protection / process mitigation policies to enable CIG and ACG where compatible</li><li>Ensure EDR processes run at High integrity level</li></ul>
+</div>
+
+<!-- TECHNIQUE 08 -->
+<div class="technique">
+<h2>Technique 08: Process Hollowing and Thread-Context Hijacking</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1055.012 (Process Hollowing) for classic hollowing; thread-context hijacking should be mapped according to the specific injection behavior observed<br>
+<strong>Evidence:</strong> Observed in the wild + reproduced in lab
+</div>
+<h3>What the attacker does</h3>
+<p>These are related but technically distinct process-injection techniques:</p>
+<ul><li><strong>Classic hollowing:</strong> Spawns a legitimate process suspended, unmaps the original PE image via <code>ZwUnmapViewOfSection</code>, writes a malicious replacement image, and resumes execution.</li><li><strong>Thread-context hijacking (RIP hijack):</strong> Spawns a process suspended, allocates and writes shellcode into the target, modifies the main thread's instruction pointer (RIP on x64) via <code>GetThreadContext</code>/<code>SetThreadContext</code> to redirect execution. The original image remains mapped.</li></ul>
+<p>These techniques share a surface similarity but differ in mechanism and forensic footprint. They should not be treated as interchangeable in detection logic or incident analysis.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Technique</th><th>Original image</th><th>Main modification</th><th>Typical execution redirection</th></tr></thead>
+<tbody>
+<tr><td>Process hollowing</td><td>Unmapped/replaced</td><td>Image replaced in memory</td><td>Entry point / redirected execution</td></tr>
+<tr><td>Thread-context hijacking</td><td>Remains mapped</td><td>Shellcode added to target</td><td>RIP/EIP modified</td></tr>
+</tbody></table></div>
+<h3>What remains visible</h3>
+<ul><li><strong>Sysmon EID 25 (Process Tampering)</strong> — can provide a strong signal for process-image tampering. It should not be assumed to detect every hollowing implementation.</li><li>Sysmon EID 1 — process creation with suspicious parent</li><li>Memory forensics — in-memory PE headers/sections that don't match the on-disk image (Volatility <code>malfind</code>, <code>hollowfind</code>)</li></ul>
+<h3>Detection opportunities</h3>
+<ul><li><strong>EID 25 can provide a strong host-level signal for process-image tampering</strong> — correlate with EID 1 (process creation) and EID 10 (process access). Detection strength depends on Sysmon configuration and the specific implementation.</li><li>Memory integrity comparison: running process image vs on-disk file</li></ul>
+<h3>Defensive controls</h3>
+<ul><li>Enable Sysmon EID 25 (Process Tampering) in your configuration</li><li>Enable Windows Tamper Protection to prevent attackers from disabling Sysmon</li><li>Periodic memory integrity snapshots comparing running images to on-disk binaries</li></ul>
+</div>
+
+<!-- TECHNIQUE 09 -->
+<div class="technique">
+<h2>Technique 09: Payload Encryption &amp; Environment-Bound Keys</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1027 (Obfuscated Files or Information), T1480.001 (Execution Guardrails: Environmental Keying)<br>
+<strong>Evidence:</strong> Observed in the wild + reproduced in lab
+</div>
+<h3>What the attacker does</h3>
+<p>The payload is encrypted using symmetric encryption. The decryption key is derived at runtime from host-specific environmental values such as volume serial, MAC address, or computer name. The required decryption key can only be reproduced when the expected environmental values are present.</p>
+<h3>What it bypasses</h3>
+<ul><li>Static scanning and signature matching</li><li>Sandbox dynamic analysis (analysis environments with different host characteristics can fail to reconstruct the expected payload)</li><li>Static content scanning and application-level inspection of the encrypted payload</li></ul>
+<h3>What remains visible</h3>
+<ul><li>Entropy analysis — high-entropy sections suggest encryption (triage signal, not standalone)</li><li>Behavioral pattern — a process that reads system identifiers immediately before performing cryptographic operations</li><li>Network activity — the decrypted payload must eventually act</li></ul>
+<h3>Defensive controls</h3>
+<ul><li>Behavioral detection over signature detection — focus on the environment-fingerprinting + crypto + execution sequence</li><li>Deploy analysis environments that accurately replicate target machine characteristics</li></ul>
+</div>
+
+<!-- TECHNIQUE 10 -->
+<div class="technique">
+<h2>Technique 10: Event Log Tampering</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1070.001 (Indicator Removal: Clear Windows Event Logs)<br>
+<strong>Evidence:</strong> Observed in the wild + reproduced in lab
+</div>
+<h3>What the attacker does</h3>
+<p>Calls <code>ClearEventLogA/W</code> on System, Application, and Security event log channels. Clearing protected event logs requires appropriate privileges.</p>
+<h3>What remains visible</h3>
+<ul><li><strong>EID 1102</strong> (Security log cleared) and <strong>EID 104</strong> (System/Application log cleared) — ironically, clearing a log generates its own event</li><li>Events already forwarded to a SIEM</li><li>Independent endpoint telemetry may reveal the process, privilege escalation, or underlying activity associated with log clearing</li></ul>
+<h3>Detection opportunities</h3>
+<ul><li>Alert on EID 1102 and EID 104 — EID 1102 should be treated as a high-priority security event because legitimate Security-log clearing is uncommon in many environments</li><li>Alert on gaps in expected log continuity</li><li>Monitor for privilege escalation preceding log clearing</li></ul>
+<h3>Defensive controls</h3>
+<ul><li><strong>Forward logs to SIEM in real-time</strong> — this is the single most important control</li><li>Restrict privileges required for log clearing to the minimum necessary accounts</li><li>Enable Windows Tamper Protection</li></ul>
+</div>
+
+<!-- TECHNIQUE 11 -->
+<div class="technique">
+<h2>Technique 11: PPID Spoofing</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> T1134.004 (Access Token Manipulation: Parent PID Spoofing)<br>
+<strong>Evidence:</strong> Observed in the wild (SideWinder, Lazarus) + reproduced in lab
+</div>
+<h3>What the attacker does</h3>
+<p>Uses <code>UpdateProcThreadAttribute</code> with <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code> to spawn a process with a forged parent PID. The process-creation metadata can identify a different parent process than the process that actually initiated the creation.</p>
+<h3>What remains visible</h3>
+<ul><li>Process creation telemetry (Sysmon EID 1, Windows Security EID 4688) still records the event</li><li>The attacker normally needs access to a suitable existing process handle with the required rights, which constrains which process can be selected as the spoofed parent</li></ul>
+<h3>Detection opportunities</h3>
+<p><strong>Do not assume the reported parent PID is necessarily the process that initiated process creation.</strong></p>
+<p>Correlate across multiple attributes:</p>
+<ul><li>Independent creator telemetry vs. reported parent (where available from kernel instrumentation or ETW)</li><li>Process token and integrity level</li><li>Command line and image path</li><li>Handle access patterns (cross-process handle with PROCESS_CREATE_PROCESS)</li></ul>
+<p>Detection depends on whether the deployed telemetry architecture records an independent creation context. Without independent creator telemetry, defenders should not assume the true creator can always be recovered.</p>
+</div>
+
+<!-- TECHNIQUE 12 -->
+<div class="technique">
+<h2>Technique 12: Fiber-Based Execution</h2>
+<div class="technique-meta">
+<strong>MITRE ATT&amp;CK:</strong> Mapping depends on the payload-delivery mechanism; fiber execution itself is better described as an execution/evasion primitive<br>
+<strong>Evidence:</strong> Publicly implemented + behavior reviewed
+</div>
+<h3>What the attacker does</h3>
+<p>Converts the current thread to a fiber (<code>ConvertThreadToFiber</code>), creates a new fiber with the payload as the callback (<code>CreateFiber</code>), and switches to it (<code>SwitchToFiber</code>). The payload executes on the existing thread as a fiber — no new OS thread is created, so <code>NtCreateThreadEx</code> is never called. The term "threadless execution" is sometimes used but is somewhat misleading: execution still occurs on a thread, just without creating a new one.</p>
+<h3>What it bypasses</h3>
+<ul><li>Thread-creation monitoring (no NtCreateThreadEx, no CreateRemoteThread)</li><li>Fiber switching does not itself generate Sysmon EID 8 because EID 8 records CreateRemoteThread activity, not fiber operations</li><li>EDR hooks on thread creation APIs</li></ul>
+<h3>What remains visible</h3>
+<ul><li>The payload still runs in-process — memory scanning can detect it</li><li>Any system calls the payload makes are still visible to kernel telemetry, where deployed</li><li>Network activity from the payload is unaffected</li></ul>
+<h3>Defensive controls</h3>
+<ul><li>Fiber execution evades thread-creation hooks but not memory or behavioral detection</li><li>Ensure EDR detection does not rely solely on thread-creation events</li></ul>
+</div>
+
+<hr>
+
+<h2>What Defenders Can Still Observe After User-Mode Evasion</h2>
+<p>Every technique above removes one source of telemetry. The defender's job is to correlate the telemetry that remains.</p>
+
+<h3>Bypass / Visibility Matrix</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Evasion</th><th>Layer targeted</th><th>Potential residual host telemetry</th><th>Network visibility</th><th>Memory</th><th>Residual detection</th></tr></thead>
+<tbody>
+<tr><td>PEB anti-debug</td><td>Analysis environment</td><td>Process creation/termination</td><td>Depends on downstream</td><td>Medium</td><td>Medium</td></tr>
+<tr><td>AMSI patch</td><td>AMSI user-mode path</td><td>Process + memory + kernel</td><td>Potentially high</td><td>High</td><td>High</td></tr>
+<tr><td>ETW patch</td><td>User-mode ETW</td><td>Kernel/security telemetry</td><td>Potentially high</td><td>High</td><td>High</td></tr>
+<tr><td>NTDLL unhook</td><td>User-mode hooks</td><td>Kernel + file/memory</td><td>Depends on downstream</td><td>High</td><td>High</td></tr>
+<tr><td>Sleep obfuscation</td><td>Memory scanning window</td><td>Memory-protection telemetry</td><td>High if beaconing</td><td>Timing-dep.</td><td>High</td></tr>
+<tr><td>Direct syscall</td><td>User-mode API hooks</td><td>Kernel syscall/activity</td><td>Independent of technique</td><td>High</td><td>Medium-High</td></tr>
+<tr><td>Early Bird APC</td><td>Target-process instrumentation</td><td>Process/access telemetry</td><td>Depends on payload</td><td>High</td><td>High</td></tr>
+<tr><td>Process hollowing</td><td>Image trust</td><td>Process-tampering/memory</td><td>Depends on payload</td><td>High</td><td>High</td></tr>
+<tr><td>Payload encryption</td><td>Static scanning</td><td>Behavioral/system telemetry</td><td>Depends on payload</td><td>Timing-dep.</td><td>Medium</td></tr>
+<tr><td>Event-log clearing</td><td>Local forensic evidence</td><td>SIEM/remote telemetry</td><td>Depends on downstream</td><td>N/A</td><td>High</td></tr>
+<tr><td>PPID spoofing</td><td>Process ancestry</td><td>Independent process telemetry</td><td>Depends on downstream</td><td>High</td><td>Medium-High</td></tr>
+<tr><td>Fiber execution</td><td>Thread-creation telemetry</td><td>Memory/behavioral telemetry</td><td>Depends on payload</td><td>Medium-High</td><td>Medium</td></tr>
+</tbody></table></div>
+<p style="font-size:0.82rem;color:var(--text-dim);">* All "potential residual host telemetry" entries depend on sensor architecture, configuration, and collection health.</p>
+
+<h3>What defenders can observe</h3>
+<p><strong>1. Process creation</strong> — Where kernel callbacks or equivalent independent telemetry are available, process creation remains observable even when user-mode hooks are bypassed.</p>
+<p><strong>2. Process access</strong> — Where kernel instrumentation is present, cross-process handle operations with suspicious access rights remain observable.</p>
+<p><strong>3. Image-load telemetry</strong> — Can be collected independently of user-mode ntdll hooks through kernel-supported notification and sensor mechanisms, where available.</p>
+<p><strong>4. Process tampering</strong> — Sysmon EID 25 can provide a strong signal for image manipulation (hollowing, herpaderping), where Sysmon is deployed and configured.</p>
+<p><strong>5. File-system activity</strong> — Where MiniFilter drivers are present, file I/O is observable independent of user-mode hooks.</p>
+<p><strong>6. Network behavior</strong> — For network-controlled malware, C2 communication eventually creates network-observable behavior, although visibility depends on where network telemetry is collected and whether traffic is encrypted, proxied, tunneled, or otherwise obscured.</p>
+<p><strong>7. Memory state</strong> — For conventional execution, executable instructions must become available in a form the processor can execute, even if only for a short window. Sleep obfuscation narrows the detection window but does not eliminate it.</p>
+<p><strong>8. Cross-host correlation</strong> — An attacker may evade one endpoint, but lateral movement across multiple endpoints exposes behavioral patterns visible to cloud-based EDR correlation, assuming telemetry reaches the correlation service.</p>
+
+<hr>
+
+<h2>Telemetry Dependency Matrix</h2>
+<p>Every evasion technique targets a specific telemetry layer but creates operational dependencies the attacker cannot eliminate:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Technique</th><th>Attacker objective</th><th>Operational dependency</th><th>Residual observation</th></tr></thead>
+<tbody>
+<tr><td>Anti-analysis</td><td>Detect/abort in analysis</td><td>Process still creates and terminates</td><td>Process creation/termination + environment discovery</td></tr>
+<tr><td>AMSI patch</td><td>Suppress content scanning</td><td>PowerShell/.NET still executes code</td><td>Process + memory + network + kernel</td></tr>
+<tr><td>ETW patch</td><td>Suppress user-mode ETW</td><td>Process still performs observable actions</td><td>Kernel ETW + SIEM (pre-patch) + behavioral</td></tr>
+<tr><td>NTDLL unhook</td><td>Remove API interception</td><td>Must map and overwrite ntdll region</td><td>File access + memory mapping + kernel callbacks</td></tr>
+<tr><td>Sleep obfuscation</td><td>Reduce scanner visibility</td><td>Memory must transition between states</td><td>Protection changes + timing + beaconing</td></tr>
+<tr><td>Direct syscall</td><td>Bypass hook interception</td><td>Kernel still processes the call</td><td>Kernel callbacks + ETW-TI + call-stack</td></tr>
+<tr><td>Early Bird APC</td><td>Execute before instrumentation</td><td>Cross-process allocation and write</td><td>Process creation + cross-process access</td></tr>
+<tr><td>Process hollowing</td><td>Corrupt image-name trust</td><td>Image replaced/modified in memory</td><td>EID 25 + memory forensics + disk comparison</td></tr>
+<tr><td>Payload encryption</td><td>Defeat static scanning</td><td>Payload must decrypt and execute</td><td>Environment discovery + crypto + behavioral</td></tr>
+<tr><td>Event-log clearing</td><td>Erase local evidence</td><td>Clearing generates its own events</td><td>EID 1102/104 + SIEM (pre-clear)</td></tr>
+<tr><td>PPID spoofing</td><td>Corrupt ancestry detections</td><td>Process creation still occurs</td><td>Creation + token + handle + independent creator</td></tr>
+<tr><td>Fiber execution</td><td>Avoid thread-creation telemetry</td><td>Payload still executes on a thread</td><td>Memory + behavioral + system calls</td></tr>
+</tbody></table></div>
+
+<hr>
+
+<h2>Hardening Checklist</h2>
+<ol class="checklist">
+<li><strong>Forward event logs to SIEM in real-time.</strong> ClearEventLog only affects the local log. Events successfully received by your SIEM are substantially harder for an endpoint attacker to erase.</li>
+<li><strong>Enable Sysmon with a hardened config</strong> (SwiftOnSecurity or Olaf Hartong template). A practical starting set: EID 1, 3, <strong>5</strong>, 7, 8, 10, 11, 22, <strong>25</strong>. Adjust based on environment and telemetry volume.</li>
+<li><strong>Baseline ETW telemetry rates per process type.</strong> Monitor for statistically significant deviations combined with other suspicious indicators. Missing telemetry is a signal when correlated — not proof of tampering on its own.</li>
+<li><strong>Enable kernel-level ETW consumers in your EDR.</strong> Ask the vendor which kernel-level telemetry sources they use and whether ETW-TI is part of that telemetry architecture.</li>
+<li><strong>Configure sandboxes realistically.</strong> 4+ CPUs, 8+ GB RAM, 1080p+ resolution, realistic uptime, installed applications, browser history, user activity simulation.</li>
+<li><strong>Use Windows Exploit Protection / process mitigation policies to enable CIG and ACG</strong> where compatible. Test before deploying broadly.</li>
+<li><strong>Enable periodic memory scanning</strong> in your EDR using the shortest practical interval. Sleep obfuscation only works during the sleep window.</li>
+<li><strong>Monitor memory protection cycling</strong> on private executable regions. Repeated transitions between executable and NOACCESS states warrant investigation, especially with concurrent network beaconing.</li>
+<li><strong>Enable CET (hardware stack protection)</strong> where hardware supports it (Intel 11th gen+, AMD Zen 3+). Defense-in-depth, not a silver bullet.</li>
+<li><strong>Run a purple team exercise against these specific techniques.</strong> The only way to know whether your detections fire is to test them.</li>
+</ol>
+
+<hr>
+
+<h2>Common Detection Engineering Mistakes</h2>
+<div class="mistakes">
+<div class="mistake"><strong>Writing rules that match a single artifact instead of a behavioral sequence.</strong> A rule that fires on <code>VirtualAllocEx</code> alone generates noise. A rule that correlates <code>VirtualAllocEx</code> → cross-process write → thread creation in the target → anomalous network activity within a time window detects the operation, not just the API call.</div>
+<div class="mistake"><strong>Assuming telemetry absence means nothing happened.</strong> Missing AMSI events from a PowerShell process that is actively executing scripts is itself a signal — but only when correlated with other indicators. Telemetry absence is a triage signal, not proof of tampering on its own.</div>
+<div class="mistake"><strong>Treating user-mode hooks as a reliable detection foundation.</strong> Every technique in this article demonstrates that user-mode hooks can be bypassed. Kernel telemetry, network visibility, and behavioral correlation provide more durable foundations.</div>
+<div class="mistake"><strong>Conflating related techniques in detection logic.</strong> Process hollowing and thread-context hijacking share a surface similarity but differ in mechanism and forensic footprint. Write distinct detection logic for distinct techniques.</div>
+<div class="mistake"><strong>Testing detections against tool-specific implementations rather than the underlying technique.</strong> A Sigma rule tuned to detect a specific Cobalt Strike sleep pattern will miss a custom implant using the same technique with different parameters. Test against the behavioral pattern, not the tool.</div>
+</div>
+
+<hr>
+
+<h2>What This Article Does Not Claim</h2>
+<p>This article does <strong>not</strong> claim that:</p>
+<ul class="neg-list">
+<li>every EDR collects kernel telemetry;</li>
+<li>every EDR can detect direct syscalls;</li>
+<li>ETW-TI is universally available to defenders;</li>
+<li>Sysmon alone can reconstruct complex injection chains;</li>
+<li>missing telemetry proves tampering;</li>
+<li>memory scanning catches every encrypted or injected payload;</li>
+<li>network telemetry is always available;</li>
+<li>any individual evasion technique guarantees detection bypass.</li>
+</ul>
+<p>Instead, the article argues that <strong>defensive visibility improves when independent telemetry sources are correlated rather than treated as interchangeable or universal.</strong></p>
+
+<hr>
+
+<h2>Conclusion</h2>
+<p>EDR evasion is rarely about becoming invisible. It is about <strong>reducing the number of sensors that can see you</strong>.</p>
+<p>Attackers can patch AMSI. They can interfere with user-mode ETW. They can remove ntdll hooks, invoke syscalls directly, encrypt their memory, spoof process ancestry, or execute without creating conventional threads.</p>
+<p>But every technique creates dependencies. The implant still needs CPU execution. It still needs memory. It still needs files, credentials, processes, or system resources. And if it is remotely controlled, it eventually needs a network path.</p>
+<p>That gives defenders an important advantage: <strong>one telemetry source may be blinded, but multiple independent observations are much harder to erase simultaneously.</strong></p>
+<p>The objective of modern detection engineering should not be to build a detection that survives every evasion technique. It should be to build <strong>multiple independent detections whose signals converge on the same behavior</strong>.</p>
+
+<div class="conclusion-block">
+<div class="thesis">Attackers reduce telemetry. Defenders increase correlation.</div>
+<p style="color:var(--text-dim);margin:0.5rem 0 1rem;">That is the cat-and-mouse game.</p>
+<div class="closer">Blind one sensor, and another should still be watching.</div>
+</div>
+
+<hr>
+
+<h2>References</h2>
+
+<div class="ref-section">
+<h4>Primary Authoritative Sources</h4>
+<p><strong>Microsoft Documentation</strong></p>
+<ul>
+<li><a href="https://learn.microsoft.com/en-us/windows/security/operating-system-security/sysmon/sysmon-events">Sysmon Events</a> — authoritative EID reference</li>
+<li><a href="https://learn.microsoft.com/en-us/windows/security/operating-system-security/sysmon/sysmon-configuration-files">Sysmon Configuration</a> — configuration file reference</li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/api/amsi/nf-amsi-amsiscanbuffer">AmsiScanBuffer</a> — returns HRESULT; scan result delivered through <code>[out] AMSI_RESULT*</code> parameter</li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal">AMSI Overview</a> — architecture and integration</li>
+<li><a href="https://learn.microsoft.com/en-us/windows/win32/devnotes/etweventwrite">EtwEventWrite</a> — "internal to the operating system and subject to change"</li>
+</ul>
+<p><strong>MITRE ATT&amp;CK</strong></p>
+<ul>
+<li><a href="https://attack.mitre.org/techniques/T1055/">T1055 — Process Injection</a> (sub-techniques: <a href="https://attack.mitre.org/techniques/T1055/004/">.004 APC</a>, <a href="https://attack.mitre.org/techniques/T1055/012/">.012 Hollowing</a>)</li>
+<li><a href="https://attack.mitre.org/techniques/T1106/">T1106 — Native API</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1497/">T1497 — Virtualization/Sandbox Evasion</a> (<a href="https://attack.mitre.org/techniques/T1497/003/">.003 Time Based Checks</a>)</li>
+<li><a href="https://attack.mitre.org/techniques/T1027/">T1027 — Obfuscated Files or Information</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1562/001/">T1562.001 — Impair Defenses</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1070/001/">T1070.001 — Clear Windows Event Logs</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1134/004/">T1134.004 — Parent PID Spoofing</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1480/001/">T1480.001 — Environmental Keying</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1620/">T1620 — Reflective Code Loading</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1622/">T1622 — Debugger Evasion</a></li>
+</ul>
+</div>
+
+<div class="ref-section">
+<h4>Security Research</h4>
+<ul>
+<li>@_xpn_ (Adam Chester) — Early Bird APC injection research</li>
+<li>@hasherezade — process hollowing analysis and PE-sieve tooling</li>
+<li>@_RastaMouse — AMSI bypass research</li>
+<li>MDSec — PPID spoofing and parent process manipulation research</li>
+</ul>
+</div>
+
+<div class="ref-section">
+<h4>Public Implementations</h4>
+<ul>
+<li><a href="https://github.com/am0nsec/HellsGate">Hell's Gate</a> — am0nsec &amp; RtlMateusz, direct syscall resolution via SSN extraction</li>
+<li><a href="https://github.com/trickster0/TartarusGate">Tartarus Gate</a> — trickster0, hooked-stub SSN inference by ordinal neighbor</li>
+<li><a href="https://github.com/Cracked5pider/Ekko">Ekko</a> — 5pider, sleep obfuscation via timer-queue APCs</li>
+<li><a href="https://j00ru.vexillium.org/syscalls/nt/64/">j00ru syscall table</a> — Windows NT syscall numbers across versions</li>
+</ul>
+</div>
+
+<div class="ref-section">
+<h4>Detection Engineering</h4>
+<ul>
+<li><a href="https://github.com/SwiftOnSecurity/sysmon-config">SwiftOnSecurity Sysmon config</a></li>
+<li><a href="https://github.com/olafhartong/sysmon-modular">Olaf Hartong sysmon-modular</a></li>
+<li><a href="https://github.com/SigmaHQ/sigma">Sigma rules</a> — community detection rules</li>
+<li><a href="https://github.com/hasherezade/pe-sieve">PE-sieve</a> — process memory scanner for hollowing/injection</li>
+</ul>
+</div>
+
+</div>
+
+</body>
+</html>
