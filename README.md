@@ -1,37 +1,38 @@
-# 0X1 — Offensive Security Research Blog
+# 0X1: Security Research Blog
 
-> Hands-on write-ups from the lab: EDR evasion, malware analysis, reverse engineering, and threat intelligence. Every code snippet compiled. Every output from a real run.
+Malware analysis, reverse engineering, threat intelligence and detection research by BlackXero1.
 
-**Live site → [blackxero1.github.io/0X1](https://blackxero1.github.io/0X1/)**
-
----
+**Live site:** [https://blackxero1.github.io/0X1/](https://blackxero1.github.io/0X1/) · **RSS:** [https://blackxero1.github.io/0X1/feed.xml](https://blackxero1.github.io/0X1/feed.xml)
 
 ## Posts
 
-| Post | Category |
-|------|----------|
-| [EDR Evasion — Layers, Live](https://blackxero1.github.io/0X1/offensive/edr.html) | Offensive Security |
-| [Nine Front Doors, One Toolkit](https://blackxero1.github.io/0X1/malware-analysis/bitter-apt.html) | Malware Analysis / Threat Intel |
-| [The Cat-and-Mouse Game](https://blackxero1.github.io/0X1/defensive/edr-evasion.html) | Defensive Security |
+| Post | Category | Type | Date |
+|------|----------|------|------|
+| [Six Locks, No Key](https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html) | Reverse Engineering · Go Malware | Deep Dive | 2026-11-20 |
+| [Memory Tells the Truth](https://blackxero1.github.io/0X1/dfir/memory-forensics.html) | DFIR · Memory Forensics | Research | 2026-11-20 |
+| [EDR Evasion: Layers, Live](https://blackxero1.github.io/0X1/offensive/edr.html) | Offensive Research | Research | 2026-11-17 |
+| [ClickFix: Two Chains, One Technique](https://blackxero1.github.io/0X1/malware-analysis/clickfix.html) | Malware Analysis · Initial Access | Case Study | 2026-11-12 |
+| [Nine Front Doors, One Toolkit](https://blackxero1.github.io/0X1/malware-analysis/bitter-apt.html) | Threat Intelligence · APT | Deep Dive | 2026-08-18 |
+| [The Cat-and-Mouse Game](https://blackxero1.github.io/0X1/defensive/edr-evasion.html) | Defensive · Detection Engineering | Research | 2026-08-10 |
 
 ## Structure
 
 ```
-index.html                  Homepage + post index
-about.html                  About page
-404.html                    Custom 404
-offensive/
-  edr.html                  EDR Evasion — Layers, Live
-malware-analysis/
-  bitter-apt.html           Nine Front Doors, One Toolkit (Bitter/TA397)
-defensive/
-  edr-evasion.html          The Cat-and-Mouse Game
+index.html                         Home page and post index (category filters)
+about.html                         About
+404.html                           Not-found page
+feed.xml                           RSS feed
+assets/post.css                    Shared post styles (related posts, byline)
+reverse-engineering/go-dropper.html
+dfir/memory-forensics.html
+offensive/edr.html
+malware-analysis/clickfix.html
+malware-analysis/bitter-apt.html
+defensive/edr-evasion.html
 ```
 
-## About
+## Adding a post
 
-Senior malware analyst and reverse engineer. Static + dynamic analysis, C2 dissection, IOC extraction, YARA/Sigma rule writing, and offensive security research — all in an authorized, snapshot-protected lab.
-
----
-
-> All research is authorized. Lab environment only.
+1. Copy an existing post as the template (nav, hero byline, TOC, related posts, disclaimer, footer).
+2. Add a card to `index.html` with the right `data-cat` (`malware`, `re`, `ti`, `defensive`, `offensive`) and type (Deep Dive, Case Study, Research).
+3. Add an `<item>` to `feed.xml` and a row to this README.

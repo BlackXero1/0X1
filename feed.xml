@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>0X1</title>
+  <link>https://blackxero1.github.io/0X1/</link>
+  <atom:link href="https://blackxero1.github.io/0X1/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>Malware analysis, reverse engineering, threat intelligence and detection research by BlackXero1.</description>
+  <language>en</language>
+  <lastBuildDate>Fri, 20 Nov 2026 09:00:00 +0000</lastBuildDate>
+  <item>
+    <title>Six Locks, No Key</title>
+    <link>https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html</guid>
+    <pubDate>Fri, 20 Nov 2026 09:00:00 +0000</pubDate>
+    <category>Reverse Engineering · Go Malware</category>
+    <description>Reversing a Go dropper&#x27;s six-step inline payload decryption with GoReSym, capstone and Python, then statically unpacking a novel infostealer without running it.</description>
+  </item>
+  <item>
+    <title>Memory Tells the Truth</title>
+    <link>https://blackxero1.github.io/0X1/dfir/memory-forensics.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/dfir/memory-forensics.html</guid>
+    <pubDate>Fri, 20 Nov 2026 09:00:00 +0000</pubDate>
+    <category>DFIR · Memory Forensics</category>
+    <description>Five fileless and in-memory techniques, one RAM dump each: what survives in volatile memory when the disk is clean, and how to recover it with Volatility 3.</description>
+  </item>
+  <item>
+    <title>EDR Evasion: Layers, Live</title>
+    <link>https://blackxero1.github.io/0X1/offensive/edr.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/offensive/edr.html</guid>
+    <pubDate>Tue, 17 Nov 2026 09:00:00 +0000</pubDate>
+    <category>Offensive Research</category>
+    <description>Anti-analysis, hook removal, syscall resolution, process injection and cryptography, implemented in C++ and tested against a live Windows 10 target.</description>
+  </item>
+  <item>
+    <title>ClickFix: Two Chains, One Technique</title>
+    <link>https://blackxero1.github.io/0X1/malware-analysis/clickfix.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/malware-analysis/clickfix.html</guid>
+    <pubDate>Thu, 12 Nov 2026 09:00:00 +0000</pubDate>
+    <category>Malware Analysis · Initial Access</category>
+    <description>Two live ClickFix campaigns: an AES PowerShell chain to a custom Go infostealer, and an MSI VBScript chain to a WebRTC C2 implant. Full chain RE, YARA, Sigma, IOCs.</description>
+  </item>
+  <item>
+    <title>Nine Front Doors, One Toolkit</title>
+    <link>https://blackxero1.github.io/0X1/malware-analysis/bitter-apt.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/malware-analysis/bitter-apt.html</guid>
+    <pubDate>Tue, 18 Aug 2026 09:00:00 +0000</pubDate>
+    <category>Threat Intelligence · APT</category>
+    <description>Bitter / TA397 across 20 samples, 10 delivery formats and 6 C2 protocols: a developer fingerprint, a corrected MiyaRAT beacon and Pakistani operator infrastructure.</description>
+  </item>
+  <item>
+    <title>The Cat-and-Mouse Game</title>
+    <link>https://blackxero1.github.io/0X1/defensive/edr-evasion.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/defensive/edr-evasion.html</guid>
+    <pubDate>Mon, 10 Aug 2026 09:00:00 +0000</pubDate>
+    <category>Defensive · Detection Engineering</category>
+    <description>EDR evasion seen from the defender&#x27;s side: what each technique blinds, what telemetry still survives, and how to correlate it into detections.</description>
+  </item>
+</channel>
+</rss>

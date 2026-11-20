@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>0X1 — Offensive Security Research</title>
+<title>0X1 — Security Research</title>
 <meta name="description" content="Hands-on offensive security research, malware analysis, and reverse engineering write-ups by BlackXero1. Every code snippet compiled, every output from a real run.">
 <meta name="author" content="BlackXero1">
-<meta property="og:title" content="0X1 — Offensive Security Research">
+<meta property="og:title" content="0X1 — Security Research">
 <meta property="og:description" content="Malware analysis, EDR evasion, reverse engineering and threat intelligence research.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://blackxero1.github.io/0X1/">
@@ -115,6 +115,8 @@ a:hover{text-decoration:underline}
 .tag-warn{background:var(--tag-warn-bg);color:var(--tag-warn-fg)}
 .tag-note{background:var(--tag-note-bg);color:var(--tag-note-fg)}
 .post-card-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
+.post-type{font-weight:700;color:var(--accent)}
+.pill-n{opacity:.6;font-weight:500}
 .post-date{font-size:12px;color:var(--text-muted);font-family:"Cascadia Code","Fira Code",Consolas,monospace}
 .post-read{font-size:12px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:4px}
 .post-read::after{content:"→";transition:transform .15s}
@@ -138,16 +140,17 @@ footer a{color:var(--accent)}
   .nav-links{gap:12px}
 }
 </style>
+<link rel="alternate" type="application/rss+xml" title="0X1 RSS" href="/0X1/feed.xml">
 </head>
 <body>
 
 <nav class="topnav">
   <div class="container">
-    <a href="/" class="nav-brand"><span>0X</span>1</a>
+    <a href="/0X1/" class="nav-brand"><span>0X</span>1</a>
     <div class="nav-links">
-      <a href="/" class="active">Home</a>
-      <a href="/0X1/offensive/">Offensive</a>
+      <a href="/0X1/" class="active">Home</a>
       <a href="/0X1/about.html">About</a>
+      <a href="/0X1/feed.xml">RSS</a>
     </div>
     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◑</button>
   </div>
@@ -155,11 +158,10 @@ footer a{color:var(--accent)}
 
 <header class="hero">
   <div class="container">
-    <div class="hero-eyebrow">Offensive Security Research · Reverse Engineering · Malware Analysis</div>
+    <div class="hero-eyebrow">Malware Analysis · Reverse Engineering · Threat Intelligence · Detection</div>
     <h1 class="hero-title"><span>0X</span>1</h1>
     <p class="hero-subtitle">
-      Hands-on write-ups from the lab: EDR evasion, malware analysis, exploit development,
-      and reverse engineering — every code snippet compiled, every output captured from a real run.
+      Independent research on how modern malware is built, how it hides, and how to catch it. Every finding comes from hands-on analysis of real samples, with detections you can deploy.
     </p>
     <div class="hero-bytes">
       48 B8 [ExitProcess] · FF D0 · C3 · XOR 0xAB → PAGE_NOACCESS → Sleep → Restore<br>
@@ -171,11 +173,12 @@ footer a{color:var(--accent)}
 
 <div class="cat-bar">
   <div class="container">
-    <button class="cat-pill active" data-cat="all"><span class="dot"></span>All posts</button>
-    <button class="cat-pill" data-cat="offensive"><span class="dot"></span>Offensive</button>
-    <button class="cat-pill" data-cat="malware"><span class="dot"></span>Malware Analysis</button>
-    <button class="cat-pill" data-cat="defensive"><span class="dot"></span>Defensive</button>
-    <button class="cat-pill" data-cat="re"><span class="dot"></span>Reverse Engineering</button>
+    <button class="cat-pill active" data-cat="all"><span class="dot"></span>All posts <span class="pill-n"></span></button>
+    <button class="cat-pill" data-cat="malware"><span class="dot"></span>Malware Analysis <span class="pill-n"></span></button>
+    <button class="cat-pill" data-cat="re"><span class="dot"></span>Reverse Engineering <span class="pill-n"></span></button>
+    <button class="cat-pill" data-cat="ti"><span class="dot"></span>Threat Intelligence <span class="pill-n"></span></button>
+    <button class="cat-pill" data-cat="defensive"><span class="dot"></span>Defensive · DFIR <span class="pill-n"></span></button>
+    <button class="cat-pill" data-cat="offensive"><span class="dot"></span>Offensive Research <span class="pill-n"></span></button>
   </div>
 </div>
 
@@ -188,114 +191,110 @@ footer a{color:var(--accent)}
 
     <div class="post-grid" id="grid">
 
-      <!-- Go Dropper RE -->
       <article class="post-card" data-cat="re">
         <div class="post-card-top">
           <div class="post-eyebrow">Reverse Engineering · Go Malware</div>
           <h3 class="post-title">Six Locks, No Key</h3>
-          <p class="post-desc">Reversing a Go 1.21 dropper's six-step inline payload decryption with GoReSym, capstone and 15 lines of Python, then statically unpacking a novel infostealer without ever running it.</p>
+          <p class="post-desc">Reversing a Go dropper's six-step inline payload decryption with GoReSym, capstone and Python, then statically unpacking a novel infostealer without running it.</p>
           <div class="post-tags">
-            <span class="tag tag-note">Reverse Engineering</span>
             <span class="tag tag-note">Go</span>
             <span class="tag tag-warn">Static Unpacking</span>
+            <span class="tag tag-note">Custom Crypto</span>
             <span class="tag tag-pass">YARA</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">2026-11-20</span>
-          <a href="/0X1/reverse-engineering/go-dropper.html" class="read-link">Read →</a>
+          <span class="post-date"><span class="post-type">Deep Dive</span> · 2026-11-20</span>
+          <a href="/0X1/reverse-engineering/go-dropper.html" class="post-read">Read</a>
         </div>
       </article>
 
-      <!-- Memory Forensics -->
       <article class="post-card" data-cat="defensive">
         <div class="post-card-top">
-          <div class="post-eyebrow">DFIR · Memory Forensics · Malware Analysis</div>
+          <div class="post-eyebrow">DFIR · Memory Forensics</div>
           <h3 class="post-title">Memory Tells the Truth</h3>
-          <p class="post-desc">Five experiments reconstructing fileless and in-memory malware from Windows volatile memory. Process hollowing, reflective loading, APC injection, unpacking, and deleted payloads — Volatility 3 analysis, 5/5 recovery rate, detection rules.</p>
+          <p class="post-desc">Five fileless and in-memory techniques, one RAM dump each: what survives in volatile memory when the disk is clean, and how to recover it with Volatility 3.</p>
           <div class="post-tags">
             <span class="tag tag-note">Volatility 3</span>
-            <span class="tag tag-note">Memory Forensics</span>
-            <span class="tag tag-pass">DFIR</span>
             <span class="tag tag-warn">Fileless</span>
+            <span class="tag tag-note">Process Injection</span>
+            <span class="tag tag-pass">Detection</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">2026-11-20</span>
-          <a href="/0X1/dfir/memory-forensics.html" class="read-link">Read →</a>
+          <span class="post-date"><span class="post-type">Research</span> · 2026-11-20</span>
+          <a href="/0X1/dfir/memory-forensics.html" class="post-read">Read</a>
         </div>
       </article>
 
-      <!-- EDR Evasion -->
       <article class="post-card" data-cat="offensive">
         <div class="post-card-top">
-          <div class="post-eyebrow">Offensive Security</div>
-          <h3 class="post-title">EDR Evasion — Layers, Live</h3>
-          <p class="post-desc">Four evasion layers — anti-analysis, hook removal, syscall resolution, process injection, and cryptography — implemented in C++ and verified against a live Windows 10 target.</p>
+          <div class="post-eyebrow">Offensive Research</div>
+          <h3 class="post-title">EDR Evasion: Layers, Live</h3>
+          <p class="post-desc">Anti-analysis, hook removal, syscall resolution, process injection and cryptography, implemented in C++ and tested against a live Windows 10 target.</p>
           <div class="post-tags">
-            <span class="tag tag-pass">✓ Compiled</span>
-            <span class="tag tag-pass">✓ Tested</span>
             <span class="tag tag-note">C++ · WinAPI</span>
-            <span class="tag tag-warn">Auth Research Only</span>
+            <span class="tag tag-warn">NTDLL Unhooking</span>
+            <span class="tag tag-note">Syscalls</span>
+            <span class="tag tag-pass">AES-GCM</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">2026-11-17</span>
+          <span class="post-date"><span class="post-type">Research</span> · 2026-11-17</span>
           <a href="/0X1/offensive/edr.html" class="post-read">Read</a>
         </div>
       </article>
 
-      <!-- ClickFix -->
       <article class="post-card" data-cat="malware">
         <div class="post-card-top">
-          <div class="post-eyebrow">Malware Analysis · Initial Access · Threat Intelligence</div>
+          <div class="post-eyebrow">Malware Analysis · Initial Access</div>
           <h3 class="post-title">ClickFix: Two Chains, One Technique</h3>
-          <p class="post-desc">Two live ClickFix campaigns dissected: AES-staged PowerShell loader dropping a custom Go infostealer, and an MSI VBScript chain delivering a WebRTC C2 implant via reflective DLL injection. Full chain RE, YARA, Sigma, IOCs.</p>
+          <p class="post-desc">Two live ClickFix campaigns: an AES PowerShell chain to a custom Go infostealer, and an MSI VBScript chain to a WebRTC C2 implant. Full chain RE, YARA, Sigma, IOCs.</p>
           <div class="post-tags">
             <span class="tag tag-note">ClickFix</span>
-            <span class="tag tag-warn">Initial Access</span>
-            <span class="tag tag-note">Go Malware</span>
+            <span class="tag tag-warn">Infostealer</span>
+            <span class="tag tag-note">MSI</span>
             <span class="tag tag-pass">YARA · Sigma</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">2026-11-12</span>
-          <a href="/0X1/malware-analysis/clickfix.html" class="read-link">Read →</a>
+          <span class="post-date"><span class="post-type">Case Study</span> · 2026-11-12</span>
+          <a href="/0X1/malware-analysis/clickfix.html" class="post-read">Read</a>
         </div>
       </article>
 
-      <!-- Bitter APT -->
-      <article class="post-card" data-cat="malware">
+      <article class="post-card" data-cat="ti">
         <div class="post-card-top">
-          <div class="post-eyebrow">Malware Analysis · Threat Intelligence</div>
+          <div class="post-eyebrow">Threat Intelligence · APT</div>
           <h3 class="post-title">Nine Front Doors, One Toolkit</h3>
-          <p class="post-desc">Deep-dive into Bitter / TA397 — nine initial-access lures, one shared post-exploitation toolkit. Static analysis, YARA/Sigma rules, IOC set, and ATT&CK mapping.</p>
+          <p class="post-desc">Bitter / TA397 across 20 samples, 10 delivery formats and 6 C2 protocols: a developer fingerprint, a corrected MiyaRAT beacon and Pakistani operator infrastructure.</p>
           <div class="post-tags">
             <span class="tag tag-note">Bitter / TA397</span>
-            <span class="tag tag-warn">APT · South Asia</span>
+            <span class="tag tag-warn">South Asia</span>
+            <span class="tag tag-note">C2 Protocols</span>
             <span class="tag tag-pass">IOC Set</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">2026-08-18</span>
+          <span class="post-date"><span class="post-type">Deep Dive</span> · 2026-08-18</span>
           <a href="/0X1/malware-analysis/bitter-apt.html" class="post-read">Read</a>
         </div>
       </article>
 
-      <!-- Cat-and-Mouse (Defensive) -->
       <article class="post-card" data-cat="defensive">
         <div class="post-card-top">
-          <div class="post-eyebrow">Defensive Security · EDR Analysis</div>
+          <div class="post-eyebrow">Defensive · Detection Engineering</div>
           <h3 class="post-title">The Cat-and-Mouse Game</h3>
-          <p class="post-desc">EDR evasion techniques seen in the wild — what attackers blind and what defenders can still see. Blue-team perspective on hook removal, AMSI patching, and telemetry gaps.</p>
+          <p class="post-desc">EDR evasion seen from the defender's side: what each technique blinds, what telemetry still survives, and how to correlate it into detections.</p>
           <div class="post-tags">
-            <span class="tag tag-note">Blue Team</span>
-            <span class="tag tag-pass">Detection</span>
-            <span class="tag tag-warn">EDR Gaps</span>
+            <span class="tag tag-note">EDR Telemetry</span>
+            <span class="tag tag-warn">Sysmon</span>
+            <span class="tag tag-note">Sigma</span>
+            <span class="tag tag-pass">Correlation</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">2026-08-10</span>
+          <span class="post-date"><span class="post-type">Research</span> · 2026-08-10</span>
           <a href="/0X1/defensive/edr-evasion.html" class="post-read">Read</a>
         </div>
       </article>
@@ -308,7 +307,7 @@ footer a{color:var(--accent)}
 
 <footer>
   <div class="container">
-    <p>© 2026 BlackXero1 · Authorized research only ·</p>
+    <p>© 2026 BlackXero1 · <a href="/0X1/about.html">About</a> · <a href="/0X1/feed.xml">RSS</a> · All research authorized</p>
   </div>
 </footer>
 
@@ -352,6 +351,7 @@ pills.forEach(pill=>{
     updateCount();
   });
 });
+pills.forEach(p=>{const c=p.dataset.cat;const n=c==='all'?cards.length:[...cards].filter(x=>x.dataset.cat===c).length;const el=p.querySelector('.pill-n');if(el)el.textContent=n;});
 updateCount();
 </script>
 </body>

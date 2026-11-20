@@ -98,6 +98,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color
 footer a{color:var(--accent)}
 @media(max-width:580px){.hero{padding:40px 0 32px}.skill-grid{grid-template-columns:1fr 1fr}}
 </style>
+<link rel="alternate" type="application/rss+xml" title="0X1 RSS" href="/0X1/feed.xml">
 </head>
 <body>
 <script>(function(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
@@ -108,6 +109,7 @@ footer a{color:var(--accent)}
     <div class="nav-links">
       <a href="/0X1/">Home</a>
       <a href="/0X1/about.html" class="active">About</a>
+      <a href="/0X1/feed.xml">RSS</a>
     </div>
     <button class="theme-btn" onclick="(function(){const r=document.documentElement;const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');localStorage.setItem('theme',r.getAttribute('data-theme'))})()">◑</button>
   </div>
@@ -229,7 +231,7 @@ footer a{color:var(--accent)}
       <h2>Disclaimer</h2>
       <div class="disclaimer">
         <strong>Authorized Research Only</strong>
-        All analysis is performed in an isolated, snapshot-protected lab environment. Offensive techniques are documented for educational and defensive purposes only. No code or technique published here should be used outside an authorized environment.
+        All analysis is performed in a controlled, authorized environment. Offensive techniques are documented for educational and defensive purposes only. No code or technique published here should be used outside an authorized environment.
       </div>
     </div>
 
@@ -238,7 +240,7 @@ footer a{color:var(--accent)}
 
 <footer>
   <div class="container">
-    <p>© 2026 BlackXero1 · <a href="/0X1/">0X1 Blog</a> ·</p>
+    <p>© 2026 BlackXero1 · <a href="/0X1/">0X1 Blog</a> · <a href="/0X1/feed.xml">RSS</a> · All research authorized</p>
   </div>
 </footer>
 </body>
