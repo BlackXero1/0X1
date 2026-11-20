@@ -1,4 +1,20 @@
-<title>EDR Evasion — Layers, Live</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDR Evasion — Layers, Live | 0X1</title>
+<meta name="description" content="Four EDR evasion layers — anti-analysis, hook removal, syscall resolution, process injection and cryptography — implemented in C++ and verified against a live Windows 10 target.">
+<meta name="author" content="BlackXero1">
+<meta property="og:title" content="EDR Evasion — Layers, Live">
+<meta property="og:description" content="Four evasion layers implemented in C++, compiled with MSVC 19.50, and verified against a live Windows 10 target.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://blackxero1.github.io/0X1/offensive/edr.html">
+<meta property="og:site_name" content="0X1">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="EDR Evasion — Layers, Live | 0X1">
+<meta name="twitter:description" content="Anti-analysis, NTDLL unhooking, Hell's Gate syscalls, process injection and AES-256-GCM — full C++ implementation.">
+<link rel="canonical" href="https://blackxero1.github.io/0X1/offensive/edr.html">
 <style>
 :root {
   --bg:          #F2F5F9;
@@ -143,6 +159,7 @@ footer a{color:var(--accent);text-decoration:none}
     <div style="display:flex;gap:20px">
       <a href="/0X1/" style="font-size:13px;font-weight:600;color:var(--text-muted);text-decoration:none">← Home</a>
       <a href="/0X1/offensive/" style="font-size:13px;font-weight:600;color:var(--accent);text-decoration:none">Offensive</a>
+      <a href="/0X1/about.html" style="font-size:13px;font-weight:600;color:var(--text-muted,#666);text-decoration:none">About</a>
       <a href="https://github.com/BlackXero1/0X1" target="_blank" style="font-size:13px;font-weight:600;color:var(--text-muted);text-decoration:none">GitHub</a>
     </div>
     <button style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text-muted);cursor:pointer" onclick="(function(){const r=document.documentElement;const cur=r.getAttribute('data-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',cur==='dark'?'light':'dark');localStorage.setItem('theme',r.getAttribute('data-theme'))})()">◑</button>
