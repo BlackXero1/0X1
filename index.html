@@ -164,6 +164,7 @@ footer a{color:var(--accent)}
     <button class="cat-pill active" data-cat="all"><span class="dot"></span>All posts</button>
     <button class="cat-pill" data-cat="offensive"><span class="dot"></span>Offensive</button>
     <button class="cat-pill" data-cat="malware"><span class="dot"></span>Malware Analysis</button>
+    <button class="cat-pill" data-cat="defensive"><span class="dot"></span>Defensive</button>
     <button class="cat-pill" data-cat="re"><span class="dot"></span>Reverse Engineering</button>
   </div>
 </div>
@@ -196,18 +197,39 @@ footer a{color:var(--accent)}
         </div>
       </article>
 
-      <!-- Placeholder: Malware Analysis -->
-      <article class="post-card soon" data-cat="malware">
+      <!-- Bitter APT -->
+      <article class="post-card" data-cat="malware">
         <div class="post-card-top">
-          <div class="post-eyebrow">Malware Analysis</div>
-          <h3 class="post-title">Coming soon</h3>
-          <p class="post-desc">Next write-up in progress.</p>
+          <div class="post-eyebrow">Malware Analysis · Threat Intelligence</div>
+          <h3 class="post-title">Nine Front Doors, One Toolkit</h3>
+          <p class="post-desc">Deep-dive into Bitter / TA397 — nine initial-access lures, one shared post-exploitation toolkit. Static analysis, YARA/Sigma rules, IOC set, and ATT&CK mapping.</p>
           <div class="post-tags">
-            <span class="tag tag-note">Upcoming</span>
+            <span class="tag tag-note">Bitter / TA397</span>
+            <span class="tag tag-warn">APT · South Asia</span>
+            <span class="tag tag-pass">IOC Set</span>
           </div>
         </div>
         <div class="post-card-foot">
-          <span class="post-date">—</span>
+          <span class="post-date">2026-11-20</span>
+          <a href="/malware-analysis/bitter-apt.html" class="post-read">Read</a>
+        </div>
+      </article>
+
+      <!-- Cat-and-Mouse (Defensive) -->
+      <article class="post-card" data-cat="defensive">
+        <div class="post-card-top">
+          <div class="post-eyebrow">Defensive Security · EDR Analysis</div>
+          <h3 class="post-title">The Cat-and-Mouse Game</h3>
+          <p class="post-desc">EDR evasion techniques seen in the wild — what attackers blind and what defenders can still see. Blue-team perspective on hook removal, AMSI patching, and telemetry gaps.</p>
+          <div class="post-tags">
+            <span class="tag tag-note">Blue Team</span>
+            <span class="tag tag-pass">Detection</span>
+            <span class="tag tag-warn">EDR Gaps</span>
+          </div>
+        </div>
+        <div class="post-card-foot">
+          <span class="post-date">2026-11-20</span>
+          <a href="/defensive/edr-evasion.html" class="post-read">Read</a>
         </div>
       </article>
 
