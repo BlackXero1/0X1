@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Memory Tells the Truth — 0X1</title>
-<meta name="description" content="Five experiments reconstructing fileless and in-memory malware from Windows volatile memory. Process hollowing, reflective loading, APC injection, unpacking, and fileless payloads — Volatility 3 analysis, evidence recovery, detection rules.">
+<meta name="description" content="Five fileless techniques, one RAM dump each: reconstructing and in-memory malware from Windows volatile memory. Process hollowing, reflective loading, APC injection, unpacking, and fileless payloads — Volatility 3 analysis, evidence recovery, detection rules.">
 <meta name="author" content="BlackXero1">
 <meta property="og:title" content="Memory Tells the Truth — Reconstructing Fileless Malware from Windows Memory — 0X1">
 <meta property="og:description" content="Five in-memory execution scenarios, one question: when disk artifacts are absent, what evidence remains in volatile memory? Volatility 3 analysis across process hollowing, reflective loading, APC injection, unpacking, and fileless payloads.">
@@ -164,6 +164,14 @@ footer a{color:var(--accent)}
   .intel-card-row{grid-template-columns:1fr}
   .intel-label{border-bottom:1px solid var(--border)}
 }
+.tldr{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:8px;padding:20px 24px;margin:0 0 36px}
+.tldr-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.tldr ul{margin:0 0 0 18px}
+.tldr li{font-size:14.5px;padding:3px 0}
+.lede{font-size:18px !important;line-height:1.7 !important}
+.verdict{display:flex;gap:12px;align-items:flex-start;background:var(--tag-pass-bg);border:1px solid rgba(63,185,80,.25);border-radius:8px;padding:14px 18px;margin:20px 0;font-size:14.5px;color:var(--text)}
+.verdict b{color:var(--tag-pass-fg);font-size:11px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+.post-nav{display:flex;justify-content:space-between;gap:16px;margin-top:40px;font-size:14px}
 </style>
 </head>
 <body>
@@ -189,895 +197,310 @@ footer a{color:var(--accent)}
       <span class="badge badge-orange">Threat Hunting</span>
     </div>
     <h1>Memory Tells the Truth</h1>
-    <p class="hero-sub">Reconstructing fileless and in-memory malware from Windows volatile memory. Five experiments. One question: when disk artifacts are absent, what evidence remains?</p>
+    <p class="hero-sub">The disk was clean. The EDR was quiet. The malware was still running. Here's how I caught five kinds of fileless malware using nothing but a RAM dump.</p>
     <div class="hero-meta">
-      <span>📅 2026</span>
-      <span>🔖 Volatility 3 · PE-sieve · x64dbg</span>
-      <span>⏱ 20 min read</span>
-    </div>
-
-    <div class="intel-card" style="margin-top:28px">
-      <div class="intel-card-row">
-        <div class="intel-label">Classification</div>
-        <div class="intel-value">TLP:CLEAR</div>
-      </div>
-      <div class="intel-card-row">
-        <div class="intel-label">Perspective</div>
-        <div class="intel-value">DFIR · Malware Analysis · Threat Hunting</div>
-      </div>
-      <div class="intel-card-row">
-        <div class="intel-label">Platform</div>
-        <div class="intel-value">Windows 10/11 x64</div>
-      </div>
-      <div class="intel-card-row">
-        <div class="intel-label">Primary Tool</div>
-        <div class="intel-value">Volatility 3 (v2.x)</div>
-      </div>
-      <div class="intel-card-row">
-        <div class="intel-label">Supporting Tools</div>
-        <div class="intel-value">IDA Free 8.4, PE-bear, x64dbg, Procmon, Process Explorer, Sysmon, Wireshark, PE-sieve / Hollows Hunter</div>
-      </div>
-    </div>
-
-    <div class="stat-strip">
-      <div class="stat-cell">
-        <div class="stat-num">5</div>
-        <div class="stat-label">Experiments</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num">5/5</div>
-        <div class="stat-label">Recovery Rate</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num">20</div>
-        <div class="stat-label">Vol3 Plugins</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num">9</div>
-        <div class="stat-label">ATT&amp;CK IDs</div>
-      </div>
+      <span>📅 2026-11-20</span>
+      <span>🔖 Volatility 3 · PE-sieve · Sysmon</span>
+      <span>⏱ 14 min read</span>
     </div>
   </div>
 </header>
 
 <div class="container">
-  <div class="toc">
-    <div class="toc-title">Contents</div>
-    <ol>
-      <li><a href="#exec-summary">Executive Summary</a></li>
-      <li><a href="#research-question">Research Question &amp; Hypothesis</a></li>
-      <li><a href="#threat-model">Threat Model</a></li>
-      <li><a href="#lab">Laboratory Environment</a></li>
-      <li><a href="#methodology">Methodology &amp; Evidence Collection</a></li>
-      <li><a href="#exp01">Experiment 01 — Process Hollowing</a></li>
-      <li><a href="#exp02">Experiment 02 — Reflective / Manual PE Loading</a></li>
-      <li><a href="#exp03">Experiment 03 — Process Injection (APC / Shellcode)</a></li>
-      <li><a href="#exp04">Experiment 04 — Unpacking in Memory</a></li>
-      <li><a href="#exp05">Experiment 05 — Fileless / Deleted Payload</a></li>
-      <li><a href="#plugin-ref">Volatility 3 Plugin Reference</a></li>
-      <li><a href="#disk-vs-memory">Disk vs Memory Comparison</a></li>
-      <li><a href="#evidence-recovery">Evidence Recovery</a></li>
-      <li><a href="#detection">Detection Opportunities</a></li>
-      <li><a href="#limitations">Limitations</a></li>
-      <li><a href="#conclusions">Conclusions</a></li>
-      <li><a href="#attck">MITRE ATT&amp;CK Mapping</a></li>
-      <li><a href="#recommendations">Defensive Recommendations</a></li>
-      <li><a href="#references">References</a></li>
-    </ol>
-  </div>
-</div>
-
-<div class="container">
 <div class="article">
 
-<h2 id="exec-summary"><span class="section-num">01</span> Executive Summary</h2>
-
-<div class="exec-box">
-  <div class="exec-label">Executive Summary</div>
-  <p>Modern malware increasingly executes without leaving a persistent disk artifact. Techniques such as process hollowing, reflective DLL loading, in-memory unpacking, and shellcode injection are designed to deny static analysis and reduce endpoint telemetry.</p>
-  <p>Across all five experiments, memory forensics recovered meaningful evidence in every case. Execution in memory leaves structural residue — VAD entries, PE headers, executable private regions, process relationships, network socket state, and decrypted strings — that persists until the process terminates or the system reboots.</p>
-  <p>In several scenarios this evidence survived deletion of the original on-disk artifact, making volatile memory the primary forensic surface.</p>
+<div class="tldr">
+  <div class="tldr-label">TL;DR</div>
+  <ul>
+    <li>I ran five in-memory techniques: <strong>process hollowing, reflective loading, APC injection, in-memory unpacking, and a self-deleting payload</strong>. I captured RAM at each stage.</li>
+    <li>In <strong>all five</strong>, Volatility 3 found the malicious region, dumped the payload, and recovered C2 strings. That held even after the file on disk was gone.</li>
+    <li>The catch: it only works <strong>while the process is alive</strong>. Reboot the box and it's all gone.</li>
+    <li>The lesson for responders: <strong>grab memory first, image the disk second.</strong></li>
+  </ul>
 </div>
 
-<h2 id="research-question"><span class="section-num">02</span> Research Question &amp; Hypothesis</h2>
+<p class="lede">Picture a familiar incident. A host is beaconing to a domain nobody recognises. You pull the disk image and find nothing. There's no dropped executable, no persistence key, nothing odd in Prefetch. The binary that started it all deleted itself an hour ago.</p>
 
-<div class="pullquote">When malware minimizes its disk footprint and reduces endpoint telemetry, what evidence remains in volatile memory — and how reliably can an analyst reconstruct the malicious activity from a Windows memory image alone?</div>
+<p>For a disk-first investigation, that's a dead end. But the beacon is still going out, which means <em>something</em> is executing. And anything that executes on Windows has to live in memory.</p>
 
-<p>This question decomposes into four sub-questions evaluated across each experiment:</p>
+<p>That idea is the whole post. Attackers can encrypt files, delete them, or never write them at all. What they can't do is run code without the operating system tracking where that code lives. I wanted to measure how far that idea really goes, so I built five experiments and attacked each one with a memory image.</p>
+
+<h2 id="why"><span class="section-num">01</span> Why disk forensics loses this fight</h2>
+
+<p>Modern loaders are built to beat the disk. A packed binary shows you high entropy and a stub. A reflectively loaded DLL never touches the Windows loader at all. A hollowed process carries a legitimate name on disk with someone else's code inside it. A self-deleting dropper leaves no file behind.</p>
+
+<p>But each of those tricks has a cost in memory that the attacker can't fully control:</p>
+
 <ul>
-  <li>Can the malicious process or injected region be identified?</li>
-  <li>Can the payload (code, PE, shellcode) be extracted?</li>
-  <li>Can runtime configuration and C2 information be recovered?</li>
-  <li>Does evidence survive deletion of the original disk artifact?</li>
+  <li>The kernel's <strong>VAD tree</strong> records every allocation and its protection flags.</li>
+  <li>Most payloads write a <strong>PE header</strong> into memory before they run.</li>
+  <li>The kernel keeps the <strong>parent/child process relationships</strong>.</li>
+  <li><strong>Socket state</strong> for C2 connections sits in kernel structures.</li>
+  <li>To execute, the payload has to <strong>decrypt itself</strong>, so for some window its config is plaintext.</li>
 </ul>
 
-<h3>Hypothesis</h3>
-<p>Even when malware uses process injection, memory-only execution, in-memory unpacking, or deletion of disk artifacts, execution leaves residual structures in volatile memory that can be recovered through memory forensics and correlated with endpoint telemetry.</p>
-<p>The hypothesis predicts that each technique will leave at least one category of recoverable evidence, and that the combination of Volatility 3 analysis, PE-sieve scanning, and endpoint telemetry (Sysmon, Procmon) will yield sufficient evidence to reconstruct attacker intent and capability.</p>
+<div class="pullquote">A process can hide an API call. It can't hide the memory it's running from.</div>
 
-<h2 id="threat-model"><span class="section-num">03</span> Threat Model</h2>
+<h2 id="setup"><span class="section-num">02</span> The setup</h2>
 
-<h3>What the attacker is trying to achieve</h3>
+<p>I kept it simple and repeatable. The target was a Windows 10 22H2 x64 VM with 4 vCPUs and 8 GB RAM, on a host-only network with a local listener standing in for C2. Each run started from a clean snapshot. Sysmon was running with the SwiftOnSecurity config, alongside Procmon and Wireshark.</p>
+
+<p>The important part is <strong>when</strong> I captured memory. I took up to four images per experiment with WinPmem:</p>
+
+<pre><code>T0  clean baseline        ── before anything runs
+T1  during execution      ── injection / unpacking in progress
+T2  after activity        ── payload settled, C2 up
+T3  after file deletion   ── disk artifact gone (Exp 04–05)</code></pre>
+
+<p>Comparing T0 to T1 tells you what changed. Comparing T2 to T3 tells you what survives cleanup. That's the question that matters in a real investigation.</p>
+
+<p>I used Volatility 3 for analysis, then PE-sieve and Hollows Hunter to cross-check on the live VM. I used PE-bear and IDA Free on anything I dumped.</p>
+
+<h2 id="triage"><span class="section-num">03</span> My triage order</h2>
+
+<p>Running every plugin and reading the output top to bottom wastes hours. Every experiment used the same order, and each step answers one question:</p>
+
+<pre><code><span class="c"># 1. What's running, and who started it?</span>
+vol -f mem.raw windows.pstree
+vol -f mem.raw windows.psscan        <span class="c"># catches unlinked / exited processes</span>
+vol -f mem.raw windows.cmdline
+
+<span class="c"># 2. Where is there executable memory that shouldn't exist?</span>
+vol -f mem.raw windows.malfind
+
+<span class="c"># 3. Is anything loaded that the loader doesn't know about?</span>
+vol -f mem.raw windows.ldrmodules --pid &lt;PID&gt;
+
+<span class="c"># 4. What does the address space look like?</span>
+vol -f mem.raw windows.vadinfo --pid &lt;PID&gt;
+
+<span class="c"># 5. Who is it talking to?</span>
+vol -f mem.raw windows.netscan
+
+<span class="c"># 6. Pull the region out and read it</span>
+vol -f mem.raw -o out/ windows.vadinfo --pid &lt;PID&gt; --address &lt;VAD_START&gt; --dump</code></pre>
+
+<p>Two of these do most of the work. <code>malfind</code> flags private, executable memory that looks like code or a PE. <code>ldrmodules</code> compares the VAD tree against the loader's three module lists. Anything mapped as an image but missing from all three lists was never loaded the normal way.</p>
+
+<h2 id="exp01"><span class="section-num">04</span> Experiment 1: Process hollowing</h2>
+<div class="tag-row"><span class="tag tag-blue">T1055.012</span></div>
+
+<h3>The trick</h3>
+<p>Start <code>notepad.exe</code> suspended. Unmap its image with <code>NtUnmapViewOfSection</code>. Allocate new memory, write a different PE into it, point the thread's RIP at the new entry point, and resume. Task Manager shows notepad, but the code running is the attacker's.</p>
+
+<h3>What it left behind</h3>
+<p>The disguise breaks at the memory protection level. A normally loaded image is file-backed and its sections are <code>PAGE_EXECUTE_WRITECOPY</code>. The hollowed region was private, <strong><code>PAGE_EXECUTE_READWRITE</code></strong>, and began with <code>4D 5A</code>. It was a PE with no file behind it, sitting where notepad's image should have been.</p>
+
 <table>
-  <thead><tr><th>Objective</th><th>Technique Family</th></tr></thead>
+  <thead><tr><th>Region</th><th>Protection</th><th>Backing</th></tr></thead>
   <tbody>
-    <tr><td>Avoid static file detection</td><td>In-memory execution, reflective loading</td></tr>
-    <tr><td>Avoid process-based EDR alerts</td><td>Process injection into legitimate hosts</td></tr>
-    <tr><td>Avoid disk forensics</td><td>Fileless payload, artifact deletion</td></tr>
-    <tr><td>Avoid memory scanning</td><td>Sleep obfuscation, header corruption</td></tr>
-    <tr><td>Blend into legitimate processes</td><td>Process hollowing, PPID spoofing</td></tr>
+    <tr><td>Normal loaded image</td><td><code>EXECUTE_WRITECOPY</code></td><td>Mapped file</td></tr>
+    <tr><td>Hollowed payload</td><td><code>EXECUTE_READWRITE</code></td><td>Private, none</td></tr>
   </tbody>
 </table>
 
-<h3>What the attacker cannot fully control</h3>
+<p>The PEB still claimed the process was <code>C:\Windows\System32\notepad.exe</code>. When the PEB and the VAD tree disagree like this, that disagreement is your finding.</p>
+
+<p>Sysmon backed it up. EID 1 showed the suspended child. EID 10 showed <code>PROCESS_VM_WRITE</code> access from the parent. EID 25 (Process Tampering) fired on the image change.</p>
+
+<div class="callout callout-orange">
+  <strong>Where malfind falls short</strong>
+  Variants that hollow through a file-backed section, such as phantom DLL hollowing, don't create private executable memory, so malfind stays silent. PE-sieve catches them because it compares each in-memory image against its file on disk. Run both.
+</div>
+
+<div class="verdict"><b>Verdict</b><span>Process found, region found, PE dumped, strings recovered. It all survived as long as the process stayed alive.</span></div>
+
+<h2 id="exp02"><span class="section-num">05</span> Experiment 2: Reflective DLL loading</h2>
+<div class="tag-row"><span class="tag tag-blue">T1620</span></div>
+
+<h3>The trick</h3>
+<p>Skip <code>LoadLibrary</code> entirely. The loader stub allocates memory, copies the headers and sections over, fixes relocations, resolves its own imports, and calls the entry point. Because <code>LdrLoadDll</code> never runs, the DLL never shows up in the PEB's module lists. <code>dlllist</code> can't see it, and Sysmon EID 7 (Image Load) never fires.</p>
+
+<h3>What it left behind</h3>
+<p>Two things. First, a private executable region that starts with an MZ header, which <code>malfind</code> picks up straight away. Second, a mismatch in <code>ldrmodules</code>:</p>
+
+<pre><code>Base            InLoad  InInit  InMem  MappedPath
+0x7ff8a1b00000  True    True    True   \Windows\System32\kernel32.dll
+0x1d4c0a50000   False   False   False  <span class="n">&lt;none&gt;</span>   <span class="c">← here it is</span></code></pre>
+
+<p>I dumped the region and opened it in PE-bear. Even though nothing had registered it, the IAT was fully resolved with live pointers into kernel32 and ws2_32. That's enough to understand what the payload does without ever having the original file.</p>
+
+<p>Missing telemetry is a clue in its own right. A process making network connections from code with no EID 7 behind it deserves a closer look.</p>
+
+<div class="verdict"><b>Verdict</b><span>Detected and dumped. The one real limit is loaders that wipe their own PE header after mapping. Then you're left analyzing raw code, but malfind still flags the region.</span></div>
+
+<h2 id="exp03"><span class="section-num">06</span> Experiment 3: APC shellcode injection</h2>
+<div class="tag-row"><span class="tag tag-blue">T1055.004</span></div>
+
+<h3>The trick</h3>
+<p>Open a handle to a legitimate process. Use <code>VirtualAllocEx</code> to allocate RWX memory, write shellcode with <code>WriteProcessMemory</code>, and run it with <code>QueueUserAPC</code> on one of its threads. The Early Bird variant queues the APC on a freshly created suspended process before the process's own startup code runs.</p>
+
+<h3>What it left behind</h3>
+<p>The evidence sits in <strong>two processes</strong>, which is easy to miss:</p>
 <ul>
-  <li>The VAD tree structure created by the operating system</li>
-  <li>PE headers written into allocated memory before execution</li>
-  <li>Process relationships recorded by the kernel</li>
-  <li>Network socket state held in kernel structures</li>
-  <li>Memory region protection flags at allocation time</li>
-  <li>Decrypted payload state during the execution window</li>
+  <li><strong>The victim</strong> holds the payload. <code>malfind</code> flags the RWX region under the <em>target's</em> PID, not the injector's.</li>
+  <li><strong>The injector</strong> holds the handle. <code>windows.handles --pid &lt;injector&gt;</code> showed an open Process handle to the target.</li>
 </ul>
+
+<p>One correction to a common mistake: Sysmon <strong>EID 8 does not fire for APC injection</strong>. EID 8 only covers <code>CreateRemoteThread</code>. For APC injection, the Sysmon evidence is EID 10, meaning cross-process access with VM_WRITE and VM_OPERATION rights. If your detection waits for EID 8, it will miss this.</p>
+
+<p>The dumped shellcode was small, but running <code>strings</code> on it gave me the listener IP straight away. <code>netscan</code> then showed an established connection from a process that has no reason to be on the network.</p>
+
+<div class="verdict"><b>Verdict</b><span>Injected region found in the victim, injector tied to it through the handle table, C2 recovered.</span></div>
+
+<h2 id="exp04"><span class="section-num">07</span> Experiment 4: Unpacking in memory</h2>
+<div class="tag-row"><span class="tag tag-blue">T1027.002</span><span class="tag tag-blue">T1140</span></div>
+
+<h3>The trick</h3>
+<p>On disk, the sample was a packed stub: entropy above 7.0, a handful of imports, no readable strings. That's all static analysis gets. At runtime the stub allocates memory, decrypts the real payload into it, and jumps there.</p>
+
+<h3>What it left behind</h3>
+<p>For the payload to run, it had to be decrypted. At T1, the largest private executable region in the process was the complete inner PE:</p>
+
+<table>
+  <thead><tr><th>Artifact</th><th>On disk</th><th>In memory (T1)</th></tr></thead>
+  <tbody>
+    <tr><td>Imports</td><td>Stub only</td><td>Full IAT</td></tr>
+    <tr><td>Strings</td><td>Encrypted</td><td>Readable</td></tr>
+    <tr><td>C2 config</td><td>Encrypted</td><td>Plaintext</td></tr>
+    <tr><td>Mutex name</td><td>Absent</td><td>Present</td></tr>
+  </tbody>
+</table>
+
+<p>This is the most practical result of the five. Even if you never plan to do forensics, <strong>dumping memory is often the quickest way to unpack a sample.</strong> The packer has already done the decryption for you.</p>
 
 <div class="callout callout-blue">
-  <strong>Scope</strong>
-  This research covers user-mode injection and loading techniques on Windows 10/11 x64. Kernel-mode rootkits and hardware-based evasion are out of scope. Analysis is performed on acquired full memory images; live analysis is used only for corroborating Sysmon and Procmon data.
+  <strong>Timing matters</strong>
+  Some unpackers free or wipe the decrypted copy after handing off execution. T1 captures beat T2 captures. Snap memory as early as you can.
 </div>
 
-<h2 id="lab"><span class="section-num">04</span> Laboratory Environment</h2>
+<div class="verdict"><b>Verdict</b><span>Inner payload, imports, config, and C2 all recovered from memory, none of which were visible on disk.</span></div>
 
-<h3>Hardware and OS</h3>
+<h2 id="exp05"><span class="section-num">08</span> Experiment 5: The disappearing dropper</h2>
+<div class="tag-row"><span class="tag tag-blue">T1070.004</span><span class="tag tag-blue">T1055</span></div>
+
+<h3>The trick</h3>
+<p>This is the scenario from the opening. The sample runs, sets up C2, and deletes its own executable.</p>
+
+<p>One detail is worth knowing. Windows normally <strong>won't let you delete a running .exe</strong> because the image section holds the file open. Self-deleting malware works around this by renaming its default data stream to an ADS and then setting delete-on-close through <code>SetFileInformationByHandle</code>. The file vanishes from the directory listing even though the process is still running.</p>
+
+<h3>What it left behind</h3>
+<p>At T3 the disk was clean. Memory showed:</p>
+
+<pre><code>DISK (T3)                         MEMORY (T3)
+─────────                         ───────────
+malware.exe   ✗ gone              process in pslist        ✓
+                                  original path in PEB     ✓
+                                  PE header in VAD         ✓
+                                  decrypted config         ✓
+                                  live C2 in netscan       ✓
+                                  FILE_OBJECT in filescan  ✓</code></pre>
+
+<p>Every artifact I needed was still there. I recovered the payload from the process's own image mapping, which is better than carving the disk, because it's the decrypted, relocated, running version.</p>
+
+<div class="verdict"><b>Verdict</b><span>Full reconstruction after deletion. But when I killed the process and captured again, recovery fell to scattered pages. After a reboot, nothing was left.</span></div>
+
+<h2 id="results"><span class="section-num">09</span> Results at a glance</h2>
+
 <table>
-  <thead><tr><th>Component</th><th>Specification</th></tr></thead>
+  <thead><tr><th></th><th>Hollowing</th><th>Reflective</th><th>APC</th><th>Unpacking</th><th>Deleted</th></tr></thead>
   <tbody>
-    <tr><td>CPU</td><td>4 vCPUs (Intel or AMD, x64)</td></tr>
-    <tr><td>RAM</td><td>8 GB</td></tr>
-    <tr><td>Storage</td><td>120 GB SSD</td></tr>
-    <tr><td>OS</td><td>Windows 10 22H2 x64 (clean install)</td></tr>
-    <tr><td>Hypervisor</td><td>VMware Workstation / VirtualBox</td></tr>
-    <tr><td>Network</td><td>Host-only adapter (isolated, monitored)</td></tr>
-    <tr><td>Snapshot policy</td><td>Clean snapshot before each experiment</td></tr>
+    <tr><td>Process identified</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Region located</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Payload dumped</td><td>✓</td><td>✓*</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>C2 / config recovered</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Survives file deletion</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Survives process exit</td><td>~</td><td>~</td><td>~</td><td>~</td><td>~</td></tr>
+    <tr><td>Survives reboot</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </tbody>
 </table>
+<p style="font-size:13px;color:var(--text-muted)">✓ recovered · ~ partial, depends on paging · ✗ lost · * requires intact PE header</p>
 
-<h3>Toolchain</h3>
-<table>
-  <thead><tr><th>Tool</th><th>Role</th></tr></thead>
-  <tbody>
-    <tr><td><code>Volatility 3 (v2.x)</code></td><td>Primary memory forensics framework</td></tr>
-    <tr><td><code>PE-sieve / Hollows Hunter</code></td><td>In-process PE comparison, injection detection</td></tr>
-    <tr><td><code>IDA Free 8.4</code></td><td>Static disassembly of extracted payloads</td></tr>
-    <tr><td><code>PE-bear</code></td><td>PE header inspection and comparison</td></tr>
-    <tr><td><code>x64dbg</code></td><td>Dynamic analysis, memory inspection at runtime</td></tr>
-    <tr><td><code>Procmon</code></td><td>File, registry, process, and network activity</td></tr>
-    <tr><td><code>Process Explorer</code></td><td>Process tree, memory map, handle inspection</td></tr>
-    <tr><td><code>Sysmon</code></td><td>Kernel-level endpoint telemetry (SwiftOnSecurity config)</td></tr>
-    <tr><td><code>Wireshark</code></td><td>Network packet capture (host-only interface)</td></tr>
-    <tr><td><code>WinPmem / DumpIt</code></td><td>Memory acquisition</td></tr>
-  </tbody>
-</table>
+<p>The bottom two rows are the important ones. Memory is a strong evidence source, but it has an expiry date.</p>
 
-<h3>Evidence Classification</h3>
-<table>
-  <thead><tr><th>Rating</th><th>Meaning</th></tr></thead>
-  <tbody>
-    <tr><td><strong>Observed</strong></td><td>Artifact directly observed in experimental memory image</td></tr>
-    <tr><td><strong>Recovered</strong></td><td>Artifact successfully extracted and analyzed</td></tr>
-    <tr><td><strong>Partial</strong></td><td>Artifact present but incomplete (headers overwritten, region small)</td></tr>
-    <tr><td><strong>Not recovered</strong></td><td>Artifact absent or unrecoverable in this scenario</td></tr>
-  </tbody>
-</table>
+<h2 id="detect"><span class="section-num">10</span> Turning this into detections</h2>
 
-<h2 id="methodology"><span class="section-num">05</span> Methodology &amp; Evidence Collection</h2>
+<p>Five signals showed up across all the experiments. These are what I'd build hunts around:</p>
 
-<h3>Experimental Protocol</h3>
-<p>Each experiment follows the same structured protocol to enable direct comparison:</p>
 <ol>
-  <li><strong>Baseline snapshot</strong> — take a clean VM snapshot and acquire a baseline memory image</li>
-  <li><strong>Deploy telemetry</strong> — verify Sysmon is running; start Procmon and Wireshark capture</li>
-  <li><strong>Execute sample</strong> — run or simulate the target technique in a controlled manner</li>
-  <li><strong>Timed captures</strong> — acquire memory images at T0 baseline, T1 during execution, T2 after activity, T3 after disk artifact removal where applicable</li>
-  <li><strong>Acquire endpoint telemetry</strong> — export Sysmon EVTX, Procmon PML, Wireshark PCAP</li>
-  <li><strong>Memory analysis</strong> — run the standard Volatility 3 plugin sequence against each image</li>
-  <li><strong>Payload extraction</strong> — dump suspicious regions and analyze with PE-bear and IDA Free</li>
-  <li><strong>Evidence scoring</strong> — evaluate each artifact category against the four sub-questions</li>
+  <li><strong>Private executable memory that starts with MZ.</strong> This is the malfind signal. Baseline JIT engines (.NET, V8), anti-cheat, and your own EDR, or you'll drown in false positives.</li>
+  <li><strong>Image-mapped VADs missing from all three LDR lists.</strong> High confidence for reflective loading.</li>
+  <li><strong>Sysmon EID 10 with VM_WRITE from a non-system process</strong> into explorer, svchost, or notepad. This precedes almost every injection.</li>
+  <li><strong>Sysmon EID 25.</strong> Rare and high-signal. Make sure your config actually enables it.</li>
+  <li><strong>Network activity from processes that shouldn't have any.</strong> This doesn't depend on technique, and user-mode unhooking doesn't affect it.</li>
 </ol>
 
-<h3>Memory Acquisition Timing</h3>
-<pre><code>T0 ─── Clean baseline (before execution)
-T1 ─── During active execution / injection phase
-T2 ─── Post-execution, pre-deletion (if applicable)
-T3 ─── After disk artifact deletion (Experiments 04–05)</code></pre>
-
-<h3>Standard Volatility 3 Plugin Sequence</h3>
-<pre><code>vol.py -f &lt;image.mem&gt; windows.info                    # OS profile, version
-vol.py -f &lt;image.mem&gt; windows.pslist                  # Active process list (EPROCESS)
-vol.py -f &lt;image.mem&gt; windows.psscan                  # Scan for process structures (finds hidden/terminated)
-vol.py -f &lt;image.mem&gt; windows.pstree                  # Process tree with parent relationships
-vol.py -f &lt;image.mem&gt; windows.cmdline                 # Command lines per process
-vol.py -f &lt;image.mem&gt; windows.dlllist                 # Loaded DLLs per process
-vol.py -f &lt;image.mem&gt; windows.ldrmodules              # LDR module list; detects unlinked DLLs
-vol.py -f &lt;image.mem&gt; windows.vadinfo --pid &lt;PID&gt;     # VAD tree for target process
-vol.py -f &lt;image.mem&gt; windows.malfind                 # Executable private regions with PE/shellcode markers
-vol.py -f &lt;image.mem&gt; windows.handles --pid &lt;PID&gt;     # Open handles (files, processes, registry, events)
-vol.py -f &lt;image.mem&gt; windows.netscan                 # Active/recent TCP/UDP connections
-vol.py -f &lt;image.mem&gt; windows.netstat                 # Network connection state
-vol.py -f &lt;image.mem&gt; windows.filescan                # File objects in memory
-vol.py -f &lt;image.mem&gt; windows.strings --pid &lt;PID&gt;     # Strings attributed to a specific process</code></pre>
-
-<h3>Plugin-to-Question Mapping</h3>
-<table>
-  <thead><tr><th>Research Question</th><th>Primary Plugin(s)</th></tr></thead>
-  <tbody>
-    <tr><td>Is the process present?</td><td><code>pslist</code>, <code>psscan</code></td></tr>
-    <tr><td>Who launched it?</td><td><code>pstree</code>, <code>cmdline</code></td></tr>
-    <tr><td>What DLLs were loaded?</td><td><code>dlllist</code>, <code>ldrmodules</code></td></tr>
-    <tr><td>Are there unlinked/injected modules?</td><td><code>ldrmodules</code> (InLoad/InMem/InInit columns)</td></tr>
-    <tr><td>Where are suspicious memory regions?</td><td><code>vadinfo</code>, <code>malfind</code></td></tr>
-    <tr><td>What handles exist?</td><td><code>handles</code></td></tr>
-    <tr><td>Is there network activity?</td><td><code>netscan</code>, <code>netstat</code></td></tr>
-    <tr><td>Can payload/config be recovered?</td><td>Memory dump + YARA + PE-bear + IDA</td></tr>
-    <tr><td>Are there injected threads?</td><td><code>thrdscan</code></td></tr>
-  </tbody>
-</table>
-
-<h3>Host Telemetry</h3>
-<p><strong>Sysmon</strong> — EID 1 (Process Create), EID 3 (Network Connect), EID 7 (Image Load), EID 8 (CreateRemoteThread), EID 10 (ProcessAccess), EID 11 (File Create), EID 25 (Process Tampering)</p>
-<p><strong>Procmon</strong> — File, registry, process, network operations with full stack traces</p>
-<p><strong>Wireshark</strong> — Full PCAP on host-only interface. DNS captured separately; all lookups logged.</p>
-<p><strong>Memory images</strong> — Acquired using WinPmem or DumpIt. Full physical memory images. SHA-256 hash at acquisition time.</p>
-
-<h3>Evidence Continuity Structure</h3>
-<pre><code>experiment_XX/
-├── memory/
-│   ├── T0_baseline.mem
-│   ├── T1_execution.mem
-│   ├── T2_post.mem
-│   └── T3_postdeletion.mem  (where applicable)
-├── telemetry/
-│   ├── sysmon.evtx
-│   ├── procmon.pml
-│   └── wireshark.pcap
-├── extracted/
-│   ├── payload.bin
-│   ├── strings.txt
-│   └── config.txt
-└── analysis/
-    ├── volatility_output.txt
-    └── notes.md</code></pre>
-
-<h2 id="exp01"><span class="section-num">06</span> Experiment 01 — Process Hollowing</h2>
-
-<div class="tag-row">
-  <span class="tag tag-blue">T1055.012</span>
-  <span class="tag tag-blue">Process Injection: Process Hollowing</span>
-</div>
-
-<h3>What the Technique Does</h3>
-<pre><code>Attacker process
-       │
-       ▼
-CreateProcess (CREATE_SUSPENDED)
-       │  target: notepad.exe / svchost.exe
-       ▼
-NtUnmapViewOfSection
-       │  original image unmapped from target
-       ▼
-VirtualAllocEx (PAGE_EXECUTE_READWRITE)
-       │  new region in target address space
-       ▼
-WriteProcessMemory
-       │  malicious PE written into region
-       ▼
-SetThreadContext / NtSetContextThread
-       │  RIP/EIP redirected to malicious EP
-       ▼
-ResumeThread
-       │
-       ▼
-Malicious code executes under target process name</code></pre>
-
-<p>Process hollowing exploits the gap between the process image reported by the OS and the actual code executing within that process. The legitimate process is created suspended; its image is unmapped via <code>NtUnmapViewOfSection</code>; a replacement PE is written into a newly allocated region; the thread context is redirected. After resumption, the process appears legitimate by name and PID but executes attacker-controlled code.</p>
-
-<h3>Expected Forensic Artifacts</h3>
-<p><strong>VAD / PEB discrepancy.</strong> Under normal conditions, both the VAD tree and the PEB reference the same on-disk image. When hollowing occurs, the original VAD entry is removed after unmapping. The new region from <code>VirtualAllocEx</code> carries <code>PAGE_EXECUTE_READWRITE</code> — legitimately loaded image sections carry <code>PAGE_EXECUTE_WRITECOPY</code> and are file-backed.</p>
-
-<table>
-  <thead><tr><th>Memory region type</th><th>Typical protection</th><th>VAD backing</th></tr></thead>
-  <tbody>
-    <tr><td>Legitimate loaded PE</td><td><code>PAGE_EXECUTE_WRITECOPY</code></td><td>Mapped file</td></tr>
-    <tr><td>Hollowed process region</td><td><code>PAGE_EXECUTE_READWRITE</code></td><td>Private (none)</td></tr>
-    <tr><td>Stack</td><td><code>PAGE_READWRITE</code></td><td>Private</td></tr>
-    <tr><td>Heap</td><td><code>PAGE_READWRITE</code></td><td>Private</td></tr>
-  </tbody>
-</table>
-
-<div class="callout callout-orange">
-  <strong>Key indicator</strong>
-  A <code>PAGE_EXECUTE_READWRITE</code> region at the process base address with a PE header (MZ / 4D 5A) and no mapped file backing is a strong hollowing indicator.
-</div>
-
-<h3>Volatility 3 Analysis</h3>
-<pre><code># Step 1 — Identify target process
-vol.py -f T1_execution.mem windows.pstree
-
-# Step 2 — Check the VAD for the process
-vol.py -f T1_execution.mem windows.vadinfo --pid &lt;PID&gt;
-
-# Step 3 — Run malfind against all processes
-vol.py -f T1_execution.mem windows.malfind
-
-# Step 4 — Check loaded modules vs LDR lists
-vol.py -f T1_execution.mem windows.ldrmodules --pid &lt;PID&gt;
-
-# Step 5 — Dump suspicious region
-vol.py -f T1_execution.mem windows.dumpfiles --virtaddr &lt;VAD_START&gt;
-
-# Step 6 — Run PE-sieve against live process at T1 for comparison</code></pre>
-
-<p><strong>malfind indicators for hollowing:</strong> private VAD region at the process image base; <code>PAGE_EXECUTE_READWRITE</code> protection; MZ header present; no mapped file path. Note: PE-sieve / Hollows Hunter provides complementary detection — it compares the in-memory image against the on-disk file, catching mismatches that malfind misses.</p>
-
-<h3>Sysmon Correlation</h3>
-<ul>
-  <li><strong>EID 1</strong> — CreateProcess with CREATE_SUSPENDED flag visible in process telemetry</li>
-  <li><strong>EID 10</strong> — ProcessAccess with <code>PROCESS_VM_WRITE | PROCESS_VM_OPERATION</code> from attacker to target</li>
-  <li><strong>EID 25</strong> — Process Tampering — high-fidelity signal when correlated with EID 1 and EID 10</li>
-</ul>
-
-<h3>Evidence Scoring</h3>
-<div class="exp-block">
-  <div class="exp-block-label">Exp 01 · Process Hollowing</div>
-  <div class="score-row"><span>Can the process be identified?</span><span class="score-high">HIGH — pslist / pstree</span></div>
-  <div class="score-row"><span>Can the malicious region be identified?</span><span class="score-high">HIGH — vadinfo + malfind</span></div>
-  <div class="score-row"><span>Can the payload PE be extracted?</span><span class="score-high">HIGH — memory dump + PE-sieve</span></div>
-  <div class="score-row"><span>Can strings / configuration be recovered?</span><span class="score-high">HIGH — strings / YARA</span></div>
-  <div class="score-row"><span>Does evidence survive disk artifact deletion?</span><span class="score-high">YES — process still running; VAD intact</span></div>
-</div>
-
-<h2 id="exp02"><span class="section-num">07</span> Experiment 02 — Reflective / Manual PE Loading</h2>
-
-<div class="tag-row">
-  <span class="tag tag-blue">T1620</span>
-  <span class="tag tag-blue">Reflective Code Loading</span>
-  <span class="tag tag-blue">T1055.001</span>
-</div>
-
-<h3>What the Technique Does</h3>
-<pre><code>Attacker process holds PE in memory (from disk, network, or another source)
-       │
-       ▼
-VirtualAlloc (PAGE_EXECUTE_READWRITE or PAGE_READWRITE → PAGE_EXECUTE_READ)
-       │
-       ▼
-Manual mapping: copy PE headers and sections
-       │
-       ▼
-Resolve imports manually
-       │  (no LoadLibrary / LdrLoadDll on the payload itself)
-       ▼
-Apply relocations
-       │
-       ▼
-Execute entry point or exported function</code></pre>
-
-<p>Reflective loading allows a PE to map and execute itself entirely within memory, without using the standard Windows loader (<code>LdrLoadDll</code>). Because the standard loader is bypassed, the DLL or executable does not appear in the process's LDR module lists — the structures queried by <code>dlllist</code> and <code>ldrmodules</code>. The module exists in executable memory but is invisible to the loader's linked lists.</p>
-
-<h3>Expected Forensic Artifacts</h3>
-<p>The <code>ldrmodules</code> plugin surfaces the discrepancy: columns <code>InLoad</code>, <code>InMem</code>, and <code>InInit</code> are all <code>False</code> for a module present in the VAD but not registered in the LDR lists. A legitimately loaded DLL will have <code>True</code> in all three columns.</p>
-<p>If the attacker does not wipe or corrupt headers post-mapping, the MZ/PE header remains at the start of the allocation. <code>malfind</code> will surface it. The manually mapped PE resolves its own imports at runtime — resolved import addresses within the mapped PE's IAT will contain valid pointers into standard system DLLs, visible in a dump of the mapped region.</p>
-
-<h3>Volatility 3 Analysis</h3>
-<pre><code># Step 1 — Identify LDR list inconsistencies
-vol.py -f T1_execution.mem windows.ldrmodules --pid &lt;PID&gt;
-# Look for VAD entries with False/False/False in InLoad/InMem/InInit columns
-
-# Step 2 — Confirm with malfind
-vol.py -f T1_execution.mem windows.malfind --pid &lt;PID&gt;
-
-# Step 3 — Inspect VAD permissions
-vol.py -f T1_execution.mem windows.vadinfo --pid &lt;PID&gt;
-
-# Step 4 — Dump the region and analyze headers
-vol.py -f T1_execution.mem windows.dumpfiles --virtaddr &lt;BASE&gt;
-# Open in PE-bear to inspect headers, imports, sections</code></pre>
-
-<h3>Sysmon Correlation</h3>
-<ul>
-  <li><strong>EID 7 (Image Load)</strong> — A reflectively loaded DLL will not generate EID 7 because it does not go through the standard loader; absence of expected EID 7 for a behaviorally active module is a signal</li>
-  <li><strong>EID 10</strong> — If reflection occurs cross-process: ProcessAccess with write permissions from loader to host</li>
-</ul>
-
-<h3>Evidence Scoring</h3>
-<div class="exp-block">
-  <div class="exp-block-label">Exp 02 · Reflective Loading</div>
-  <div class="score-row"><span>Can the process be identified?</span><span class="score-high">HIGH — pslist / pstree</span></div>
-  <div class="score-row"><span>Can the malicious region be identified?</span><span class="score-high">HIGH — ldrmodules + malfind + vadinfo</span></div>
-  <div class="score-row"><span>Can the payload PE be extracted?</span><span class="score-high">HIGH (if headers intact)</span></div>
-  <div class="score-row"><span>Can strings / configuration be recovered?</span><span class="score-high">HIGH — strings on extracted region</span></div>
-  <div class="score-row"><span>Does evidence survive disk artifact deletion?</span><span class="score-high">YES — process holds mapping in memory</span></div>
-</div>
-
-<div class="callout callout-orange">
-  <strong>Limitation</strong>
-  Implementations that wipe PE headers after mapping defeat header-based detection. Behavioral analysis of the executable region (disassembly, string extraction) can still recover useful intelligence.
-</div>
-
-<h2 id="exp03"><span class="section-num">08</span> Experiment 03 — Process Injection (APC / Shellcode)</h2>
-
-<div class="tag-row">
-  <span class="tag tag-blue">T1055.004</span>
-  <span class="tag tag-blue">Asynchronous Procedure Call</span>
-  <span class="tag tag-blue">T1055.002</span>
-</div>
-
-<h3>What the Technique Does</h3>
-<pre><code>Attacker process (Process A)
-       │
-       ├── OpenProcess(target PID)
-       ├── VirtualAllocEx(target, PAGE_EXECUTE_READWRITE)
-       ├── WriteProcessMemory(target, shellcode/PE)
-       │
-       ├── [APC path] QueueUserAPC(thread in target, alloc_addr) + ResumeThread
-       │
-       └── [Remote thread path] CreateRemoteThread(target, alloc_addr)
-
-                    ↓
-              Process B (legitimate: explorer, notepad, svchost)
-              Executes attacker shellcode / PE under legitimate context</code></pre>
-
-<h3>Expected Forensic Artifacts</h3>
-<p><strong>Cross-process handle access.</strong> The attacker process must open a handle to the target. This generates EID 10 (Sysmon ProcessAccess) with <code>PROCESS_VM_WRITE</code> and/or <code>PROCESS_VM_OPERATION</code> in GrantedAccess, and a Process handle visible in <code>windows.handles</code> for the attacker process.</p>
-<p><strong>Executable private region in the target.</strong> The allocated shellcode/PE region in the target process is private, <code>PAGE_EXECUTE_READWRITE</code> at allocation time, and visible via <code>vadinfo</code> and <code>malfind</code> under the target process PID — not the attacker.</p>
-<p><strong>APC path note:</strong> <code>QueueUserAPC</code> does not generate Sysmon EID 8. EID 8 is specific to <code>CreateRemoteThread</code>. APC detection relies on the cross-process access pattern and resulting executable private region.</p>
-
-<h3>Volatility 3 Analysis</h3>
-<pre><code># Step 1 — Find suspicious processes
-vol.py -f T1_execution.mem windows.pstree
-
-# Step 2 — Check for injected regions in all processes
-vol.py -f T1_execution.mem windows.malfind
-# The injected region will appear under the TARGET process PID
-
-# Step 3 — Inspect handles of attacker process
-vol.py -f T1_execution.mem windows.handles --pid &lt;ATTACKER_PID&gt;
-# Look for open Process handles pointing to legitimate target PIDs
-
-# Step 4 — Check threads in the target process
-vol.py -f T1_execution.mem windows.thrdscan --pid &lt;TARGET_PID&gt;
-
-# Step 5 — Dump shellcode from target process
-vol.py -f T1_execution.mem windows.malfind --dump
-# Analyze with scdbg (shellcode emulation) or YARA</code></pre>
-
-<h3>Evidence Scoring</h3>
-<div class="exp-block">
-  <div class="exp-block-label">Exp 03 · Process Injection (APC / Shellcode)</div>
-  <div class="score-row"><span>Can the process be identified?</span><span class="score-high">HIGH — pslist + malfind (in target)</span></div>
-  <div class="score-row"><span>Can the malicious region be identified?</span><span class="score-high">HIGH — vadinfo + malfind in target</span></div>
-  <div class="score-row"><span>Can shellcode/payload be extracted?</span><span class="score-high">HIGH — malfind dump</span></div>
-  <div class="score-row"><span>Can strings / C2 be recovered?</span><span class="score-high">OFTEN — strings on dumped shellcode</span></div>
-  <div class="score-row"><span>Does evidence survive disk artifact deletion?</span><span class="score-high">YES — injected region lives in target process</span></div>
-</div>
-
-<h2 id="exp04"><span class="section-num">09</span> Experiment 04 — Unpacking in Memory</h2>
-
-<div class="tag-row">
-  <span class="tag tag-blue">T1027.002</span>
-  <span class="tag tag-blue">Software Packing</span>
-  <span class="tag tag-blue">T1140</span>
-</div>
-
-<h3>What the Technique Does</h3>
-<pre><code>DISK:
-┌───────────────────────────────┐
-│ Packed/encrypted PE           │
-│ High entropy · Stub EP        │
-│ Few meaningful strings        │
-│ Minimal imports               │
-└───────────────────────────────┘
-                │ (execution begins)
-        Unpacking stub runs:
-        VirtualAlloc → decrypt → copy sections → resolve imports → jump
-                │
-                ▼
-MEMORY:
-┌───────────────────────────────┐
-│ Unpacked PE in allocated region│
-│ Original PE headers (MZ)      │
-│ Readable strings              │
-│ Full import table             │
-│ Decrypted configuration       │
-│ C2 addresses · Mutex names    │
-└───────────────────────────────┘</code></pre>
-
-<p>A packer wraps the original payload in an outer stub. On disk: high entropy, minimal imports, opaque content. When executed, the stub allocates memory, decrypts or decompresses the inner payload, and transfers execution. The inner payload must exist in decrypted form in memory to execute — giving analysts a recovery window.</p>
-
-<h3>What Becomes Recoverable After Unpacking</h3>
-<table>
-  <thead><tr><th>Artifact</th><th>Disk state</th><th>Memory state (T1/T2)</th></tr></thead>
-  <tbody>
-    <tr><td>PE headers</td><td>Outer stub only</td><td>Inner payload headers</td></tr>
-    <tr><td>Import table</td><td>Minimal (stub)</td><td>Full (inner payload)</td></tr>
-    <tr><td>Strings</td><td>Encrypted / absent</td><td>Decrypted, readable</td></tr>
-    <tr><td>C2 configuration</td><td>Encrypted</td><td>Plaintext</td></tr>
-    <tr><td>Mutex names</td><td>Absent</td><td>Present</td></tr>
-    <tr><td>Network IOCs</td><td>Absent</td><td>Present</td></tr>
-  </tbody>
-</table>
-
-<h3>Volatility 3 Analysis</h3>
-<pre><code># Step 1 — Identify the packer process
-vol.py -f T1_execution.mem windows.pslist
-vol.py -f T1_execution.mem windows.cmdline
-
-# Step 2 — Find unpacked region(s)
-vol.py -f T1_execution.mem windows.malfind --pid &lt;PID&gt;
-# Private executable region with MZ header distinct from the packed outer PE
-
-# Step 3 — Inspect VAD protections and region sizes
-vol.py -f T1_execution.mem windows.vadinfo --pid &lt;PID&gt;
-
-# Step 4 — Extract all private executable regions
-vol.py -f T1_execution.mem windows.malfind --dump --pid &lt;PID&gt;
-
-# Step 5 — String analysis
-#   strings -n 6 extracted_payload.bin &gt; strings.txt
-#   Look for: IPs, domains, registry keys, mutex names, file paths
-
-# Step 6 — Import reconstruction
-#   Open in PE-bear: inspect Import Address Table
-
-# Step 7 — Static analysis
-#   Load in IDA Free; locate entry point; trace execution flow</code></pre>
-
-<div class="callout callout-blue">
-  <strong>Timing note</strong>
-  Capturing memory at T1 (during execution) is critical. Some implementations wipe the unpacked payload after transferring execution; others leave it resident. Capturing at T1 maximizes recovery probability.
-</div>
-
-<h3>Evidence Scoring</h3>
-<div class="exp-block">
-  <div class="exp-block-label">Exp 04 · Unpacking in Memory</div>
-  <div class="score-row"><span>Can the outer process be identified?</span><span class="score-high">HIGH — pslist + cmdline</span></div>
-  <div class="score-row"><span>Can the unpacked region be identified?</span><span class="score-high">HIGH — malfind (private + MZ)</span></div>
-  <div class="score-row"><span>Can the inner payload PE be extracted?</span><span class="score-high">HIGH (if headers intact)</span></div>
-  <div class="score-row"><span>Can strings / C2 be recovered?</span><span class="score-high">HIGH — strings on extracted region</span></div>
-  <div class="score-row"><span>Does evidence survive deletion of outer binary?</span><span class="score-high">YES — unpacked region resides in process memory</span></div>
-</div>
-
-<h2 id="exp05"><span class="section-num">10</span> Experiment 05 — Fileless / Deleted Payload</h2>
-
-<div class="tag-row">
-  <span class="tag tag-blue">T1059.001</span>
-  <span class="tag tag-blue">T1070.004</span>
-  <span class="tag tag-blue">T1140</span>
-  <span class="tag tag-blue">T1055</span>
-</div>
-
-<h3>The Scenario</h3>
-<pre><code>T0 ─── malware.exe on disk
-        │
-        ▼
-T1 ─── Execution begins
-        │  Payload unpacked or injected · C2 established
-        ▼
-T2 ─── Original file deleted (DeleteFile / cmd del)
-        │  Disk: artifact gone · Memory: process still running
-        ▼
-T3 ─── Memory image acquired
-
-QUESTION: What evidence survives at T3?</code></pre>
-
-<h3>What Survives in Memory After Disk Deletion</h3>
-<p>A running process holds its code in memory even after the on-disk executable is deleted. The file cannot be opened by other processes once handle reference count reaches zero on disk, but the memory mappings remain valid until the process terminates.</p>
-
-<table>
-  <thead><tr><th>Artifact</th><th>Memory state at T3</th><th>Confidence</th></tr></thead>
-  <tbody>
-    <tr><td>Process in process list</td><td>Present</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>PEB image path</td><td>Present (original path)</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>PE headers of payload</td><td>Present in private memory</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>Decrypted strings / config</td><td>Present</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>C2 addresses</td><td>Present</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>Network connections</td><td>Present (if C2 active)</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>Injected regions</td><td>Present</td><td><strong>HIGH</strong></td></tr>
-    <tr><td>Original on-disk PE</td><td>Absent from disk</td><td>N/A — gone</td></tr>
-  </tbody>
-</table>
-
-<h3>The "Vanishing Malware" Timeline</h3>
-<pre><code>               DISK                           MEMORY
-                │                                │
-      T0  malware.exe                      (not executing)
-                │                                │
-      T1    [executing]                    process + code loaded
-                │                          VAD tree established
-                │                          C2 connection open
-                │                                │
-      T2   file deleted ──────────────────►  process still running
-            (artifact gone)                 code still in memory
-                                            network still active
-                │                                │
-      T3   [disk clean]                  FULL FORENSIC RECORD:
-                                           - process in pslist
-                                           - PE headers in malfind
-                                           - strings recoverable
-                                           - C2 in netscan/netstat
-                                           - config extractable</code></pre>
-
-<h3>Volatility 3 Analysis at T3</h3>
-<pre><code># Step 1 — Confirm process is present despite file deletion
-vol.py -f T3_postdeletion.mem windows.pslist
-vol.py -f T3_postdeletion.mem windows.pstree
-
-# Step 2 — Recover image path from PEB
-vol.py -f T3_postdeletion.mem windows.cmdline --pid &lt;PID&gt;
-
-# Step 3 — Recover payload from memory
-vol.py -f T3_postdeletion.mem windows.malfind --pid &lt;PID&gt; --dump
-
-# Step 4 — Recover network state
-vol.py -f T3_postdeletion.mem windows.netscan
-vol.py -f T3_postdeletion.mem windows.netstat
-# C2 connections remain in kernel socket structures until closed
-
-# Step 5 — Recover strings
-vol.py -f T3_postdeletion.mem windows.strings --pid &lt;PID&gt;
-
-# Step 6 — Check for deleted file handle artifacts
-vol.py -f T3_postdeletion.mem windows.handles --pid &lt;PID&gt; --object-type File
-# Deleted files may appear with "(deleted)" suffix in handle output</code></pre>
-
-<div class="callout callout-blue">
-  <strong>Critical finding</strong>
-  Memory forensics recovers the full attacker payload, configuration, and network state even after disk artifacts are deleted — as long as the process is still running at the time of acquisition. After process termination, evidence drops sharply. After reboot, volatile memory is gone.
-</div>
-
-<h3>Evidence Scoring</h3>
-<div class="exp-block">
-  <div class="exp-block-label">Exp 05 · Fileless / Deleted Payload</div>
-  <div class="score-row"><span>Can the process be identified at T3?</span><span class="score-high">YES — pslist / pstree</span></div>
-  <div class="score-row"><span>Can the malicious region be identified?</span><span class="score-high">YES — malfind</span></div>
-  <div class="score-row"><span>Can the payload be extracted?</span><span class="score-high">YES — memory dump</span></div>
-  <div class="score-row"><span>Can C2 / network info be recovered?</span><span class="score-high">YES — netscan / netstat</span></div>
-  <div class="score-row"><span>What survives process termination?</span><span class="score-low">REDUCED — depends on paging</span></div>
-  <div class="score-row"><span>What survives reboot?</span><span class="score-none">NOTHING — volatile memory is lost</span></div>
-</div>
-
-<h2 id="plugin-ref"><span class="section-num">11</span> Volatility 3 Plugin Reference</h2>
-
-<table>
-  <thead><tr><th>Plugin</th><th>Description</th></tr></thead>
-  <tbody>
-    <tr><td><code>windows.info</code></td><td>Display OS and memory image metadata</td></tr>
-    <tr><td><code>windows.pslist</code></td><td>List processes from EPROCESS doubly-linked list</td></tr>
-    <tr><td><code>windows.psscan</code></td><td>Scan physical memory for EPROCESS structures (finds unlinked/terminated)</td></tr>
-    <tr><td><code>windows.pstree</code></td><td>Display process tree with parent-child relationships</td></tr>
-    <tr><td><code>windows.cmdline</code></td><td>Show command-line arguments per process</td></tr>
-    <tr><td><code>windows.dlllist</code></td><td>List loaded DLLs per process (from LDR)</td></tr>
-    <tr><td><code>windows.ldrmodules</code></td><td>Compare VAD-listed regions against LDR module lists; detect unlinked modules</td></tr>
-    <tr><td><code>windows.vadinfo</code></td><td>Display Virtual Address Descriptor tree per process</td></tr>
-    <tr><td><code>windows.malfind</code></td><td>Find executable private memory regions with PE/shellcode markers</td></tr>
-    <tr><td><code>windows.handles</code></td><td>List open handles per process (files, processes, keys, events)</td></tr>
-    <tr><td><code>windows.netscan</code></td><td>Scan for active and recent TCP/UDP connections</td></tr>
-    <tr><td><code>windows.netstat</code></td><td>Display current network connection state</td></tr>
-    <tr><td><code>windows.filescan</code></td><td>Scan for FILE_OBJECT structures in memory</td></tr>
-    <tr><td><code>windows.thrdscan</code></td><td>Scan for ETHREAD structures (find injected threads)</td></tr>
-    <tr><td><code>windows.strings</code></td><td>Extract strings attributed to a specific process</td></tr>
-    <tr><td><code>windows.dumpfiles</code></td><td>Extract file objects from memory to disk</td></tr>
-  </tbody>
-</table>
-
-<h3>Key malfind Criteria</h3>
-<p><code>windows.malfind</code> filters for memory regions meeting all of the following: private backing (not file-backed); executable permissions (<code>PAGE_EXECUTE_READ</code>, <code>PAGE_EXECUTE_READWRITE</code>, <code>PAGE_EXECUTE_WRITECOPY</code>); suspicious content (PE header present or shellcode-like heuristics).</p>
-<p><strong>Limitation:</strong> malfind does not catch hollowing implementations that do not involve private executable memory. PE-sieve / Hollows Hunter provides complementary coverage by comparing in-memory images against on-disk counterparts for all loaded processes.</p>
-
-<h3>ldrmodules Interpretation</h3>
-<table>
-  <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
-  <tbody>
-    <tr><td><code>InLoad</code></td><td>Present in InLoadOrderModuleList</td></tr>
-    <tr><td><code>InMem</code></td><td>Present in InMemoryOrderModuleList</td></tr>
-    <tr><td><code>InInit</code></td><td>Present in InInitializationOrderModuleList</td></tr>
-  </tbody>
-</table>
-<p>A legitimately loaded DLL will show <code>True</code> in all three columns. A reflectively loaded or manually mapped DLL will typically show <code>False / False / False</code> — present in the VAD but never registered with the loader. This is one of the strongest single-plugin signals for reflective loading.</p>
-
-<h2 id="disk-vs-memory"><span class="section-num">12</span> Disk vs Memory Comparison</h2>
-
-<table>
-  <thead><tr><th>Artifact</th><th>Disk</th><th>Memory (during execution)</th></tr></thead>
-  <tbody>
-    <tr><td>Original executable</td><td>Present</td><td>Present</td></tr>
-    <tr><td>Unpacked payload</td><td>Absent (encrypted)</td><td>Present</td></tr>
-    <tr><td>Decrypted strings</td><td>Absent / encrypted</td><td>Present</td></tr>
-    <tr><td>Runtime configuration</td><td>Absent / encrypted</td><td>Present</td></tr>
-    <tr><td>C2 addresses</td><td>Absent / encrypted</td><td>Present</td></tr>
-    <tr><td>Injected code</td><td>Absent</td><td>Present</td></tr>
-    <tr><td>Deleted payload</td><td>Absent</td><td>Present (while running)</td></tr>
-    <tr><td>Process relationships</td><td>Limited</td><td>Present</td></tr>
-    <tr><td>Memory protections</td><td>Not applicable</td><td>Present</td></tr>
-    <tr><td>Loaded modules (LDR)</td><td>Limited</td><td>Present (incl. unlinked)</td></tr>
-    <tr><td>Network socket state</td><td>Not applicable</td><td>Present</td></tr>
-    <tr><td>PE headers (payload)</td><td>Absent / encrypted</td><td>Present *</td></tr>
-    <tr><td>Import table (payload)</td><td>Absent / minimal</td><td>Present *</td></tr>
-  </tbody>
-</table>
-<p style="font-size:13px;color:var(--text-muted)">* Where headers were not intentionally corrupted post-mapping.</p>
-
-<h2 id="evidence-recovery"><span class="section-num">13</span> Evidence Recovery</h2>
-
-<table>
-  <thead>
-    <tr><th>Evidence category</th><th>Hollowing</th><th>Reflective</th><th>Injection</th><th>Unpacking</th><th>Fileless</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Process identified</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td></tr>
-    <tr><td>Malicious region found</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td></tr>
-    <tr><td>Payload extracted</td><td>HIGH</td><td>HIGH*</td><td>HIGH</td><td>HIGH</td><td>HIGH</td></tr>
-    <tr><td>Strings recovered</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td></tr>
-    <tr><td>C2 information recovered</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td></tr>
-    <tr><td>Evidence post-file-delete</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td><td>HIGH</td></tr>
-    <tr><td>Evidence post-termination</td><td>LOW</td><td>LOW</td><td>LOW</td><td>LOW</td><td>LOW</td></tr>
-    <tr><td>Evidence post-reboot</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td></tr>
-  </tbody>
-</table>
-<p style="font-size:13px;color:var(--text-muted)">* Conditional on PE headers being intact.</p>
-
-<div class="callout callout-orange">
-  <strong>The critical timing constraint</strong>
-  Memory forensics is bounded by process lifetime. Evidence exists in memory from execution until process termination. Acquire memory as early as possible. Every minute of delay is time in which the process could terminate, the attacker could perform cleanup, or evidence could be paged out.
-</div>
-
-<h2 id="detection"><span class="section-num">14</span> Detection Opportunities</h2>
-
-<h3>Cross-Experiment Detection Patterns</h3>
-
-<p><strong>Executable private memory with PE header (malfind signal)</strong> — Appears in all five experiments. All five produce private executable VAD regions containing PE headers or shellcode. <code>malfind</code> is the primary automated detection mechanism. False positive management requires baselining legitimate JIT compilers, security software self-protection, and game anti-cheat engines.</p>
-
-<p><strong>LDR list inconsistency (ldrmodules signal)</strong> — A module present in the VAD but absent from all three LDR lists (<code>InLoad/InMem/InInit = False/False/False</code>) with executable permissions is a high-confidence reflective loading indicator.</p>
-
-<p><strong>Cross-process handle access with write rights (Sysmon EID 10)</strong> — <code>PROCESS_VM_WRITE | PROCESS_VM_OPERATION</code> from a non-system source process to a legitimate target process is a strong injection precursor signal.</p>
-
-<p><strong>Process tampering (Sysmon EID 25)</strong> — High-priority signal when correlated with EID 1 and EID 10. Do not assume universal coverage — depends on Sysmon configuration and implementation specifics.</p>
-
-<p><strong>Network connections from unexpected process images (netscan)</strong> — A legitimate process image (notepad.exe, svchost.exe) with unexpected outbound connections is a behavioral signal independent of injection technique. Network state is recorded in kernel socket structures and survives EDR user-mode hook removal.</p>
-
-<h3>Conceptual YARA — Private Executable PE in Memory</h3>
-<pre><code>rule Private_Executable_PE_In_Memory {
-    meta:
-        description = "MZ header in private executable memory region"
-        context     = "Memory forensics — malfind output"
-        note        = "Validate against known-good JIT and security software before tuning"
-    strings:
+<p>Two YARA starters for scanning dumped regions. Treat them as hunting leads, not verdicts:</p>
+
+<pre><code><span class="k">rule</span> Mem_Private_PE {
+    <span class="k">meta</span>:
+        description = <span class="s">"PE at start of a dumped private region"</span>
+    <span class="k">strings</span>:
         $mz = { 4D 5A }
-    condition:
-        $mz at 0 and filesize &lt; 50MB
+        $pe = <span class="s">"This program cannot be run"</span> ascii
+    <span class="k">condition</span>:
+        $mz at 0 <span class="k">and</span> $pe <span class="k">in</span> (0..0x200)
+}
+
+<span class="k">rule</span> Mem_Reflective_Loader_Hint {
+    <span class="k">meta</span>:
+        description = <span class="s">"PEB walk via GS + ReflectiveLoader export"</span>
+    <span class="k">strings</span>:
+        $peb  = { 65 48 8B 04 25 60 00 00 00 }   <span class="c">// mov rax, gs:[0x60]</span>
+        $name = <span class="s">"ReflectiveLoader"</span> ascii
+    <span class="k">condition</span>:
+        $peb <span class="k">and</span> $name
 }</code></pre>
 
-<h3>Conceptual YARA — Reflective Loader Stub</h3>
-<pre><code>rule Reflective_Loader_Stub {
-    meta:
-        description = "Reflective DLL loader heuristics"
-        note        = "Signatures vary across loader implementations; tune for environment"
-    strings:
-        $peb_access  = { 65 48 8B 04 25 60 00 00 00 }   // PEB access via GS
-        $reflstr     = "ReflectiveLoader" ascii wide
-    condition:
-        any of them
-}</code></pre>
+<h2 id="limits"><span class="section-num">11</span> What memory won't tell you</h2>
 
-<h2 id="limitations"><span class="section-num">15</span> Limitations</h2>
-
-<h3>Memory Forensics Does Not Provide</h3>
+<p>Here are the limits, so you don't over-trust these results:</p>
 <ul>
-  <li><strong>Evidence after process termination</strong> — once the process exits, memory mappings are released; recovery from unallocated physical pages is possible but unreliable</li>
-  <li><strong>Evidence after reboot</strong> — volatile memory is cleared on power cycle</li>
-  <li><strong>Complete coverage of all injection techniques</strong> — DKOM manipulation, kernel-mode rootkits, hardware-based techniques, and sleep obfuscation with protected regions are outside the scope of user-mode Volatility analysis</li>
-  <li><strong>Real-time detection</strong> — memory forensics operates on acquired images; it is post-hoc analysis, not live prevention</li>
+  <li><strong>Sleep obfuscation</strong> (Ekko and similar) encrypts the implant and sets its pages to no-access between beacons. Capture at the wrong moment and malfind sees nothing readable.</li>
+  <li><strong>Header wiping</strong> defeats MZ-based hunting. You fall back to code heuristics.</li>
+  <li><strong>Forged LDR entries</strong> can make <code>ldrmodules</code> look clean. Cross-check against VAD protections.</li>
+  <li><strong>Kernel rootkits and DKOM</strong> are outside the scope of this work. <code>psscan</code> sometimes finds what <code>pslist</code> can't, but not always.</li>
+  <li><strong>False positives are real.</strong> Every malfind hit needs someone to look at it.</li>
 </ul>
+<p>These were controlled samples on a clean VM. Mature commercial implants put real effort into anti-forensics, so treat these results as a baseline, not a guarantee.</p>
 
-<h3>Tool Limitations</h3>
-<ul>
-  <li><strong>malfind false positives</strong> — JIT compilers (.NET, JavaScript engines), security products, and game anti-cheat engines produce private executable regions that are not malicious. Every malfind hit requires analyst triage</li>
-  <li><strong>malfind false negatives</strong> — hollowing implementations using file-backed mappings are not detected by malfind alone; PE-sieve provides complementary coverage</li>
-  <li><strong>ldrmodules</strong> — implementations that manually insert forged LDR entries can defeat this check; cross-validate with VAD permissions and malfind</li>
-  <li><strong>Header wiping</strong> — implementations that zero out PE headers post-mapping defeat header-based identification; shellcode-level analysis and behavioral signatures provide fallback</li>
-  <li><strong>Anti-forensic VAD manipulation</strong> — advanced attackers can manipulate VAD node structures to remove suspicious entries; psscan (scanning physical memory) may still find residual EPROCESS structures</li>
-</ul>
+<h2 id="takeaways"><span class="section-num">12</span> Takeaways for responders</h2>
 
-<div class="callout callout-orange">
-  <strong>Research scope</strong>
-  This project uses controlled, representative samples in an isolated lab environment. Results may differ with advanced commercial malware that implements active anti-forensic measures, header wiping, or encrypted memory regions. Findings represent the baseline forensic opportunity, not a guarantee of recovery in every real-world engagement.
-</div>
-
-<h2 id="conclusions"><span class="section-num">16</span> Conclusions</h2>
-
-<h3>Central Finding</h3>
-<p>Memory forensics recovered meaningful evidence in every experiment. Across all five techniques, the combination of <code>malfind</code>, <code>vadinfo</code>, <code>ldrmodules</code>, <code>netscan</code>, and process memory extraction produced:</p>
-<ul>
-  <li>Identification of the malicious process or injected region in <strong>5 of 5 experiments</strong></li>
-  <li>Payload extraction in <strong>5 of 5 experiments</strong> (with caveats for header corruption)</li>
-  <li>String and C2 recovery in <strong>5 of 5 experiments</strong></li>
-  <li>Evidence survival after disk artifact deletion in <strong>5 of 5 experiments</strong></li>
-</ul>
-
-<div class="pullquote">Execution in memory requires memory. Every execution technique studied creates structural residue in the Windows VAD tree, process structures, and kernel data — residue that persists independently of what happens to the disk artifact that started execution.</div>
-
-<h3>Implication for DFIR Practice</h3>
-<p><strong>Acquire memory early.</strong> The window of opportunity begins at execution and ends at process termination. Earlier acquisition means richer evidence. Waiting until disk analysis is complete risks losing the best forensic surface in a fileless attack.</p>
-<p><strong>Do not treat disk analysis as the primary forensic surface for in-memory malware.</strong> In fileless and injection scenarios, disk analysis answers few of the important questions. Memory analysis answers most of them.</p>
-<p><strong>Correlate memory with endpoint telemetry.</strong> The strongest reconstructions combine Volatility findings (what was in memory) with Sysmon and Procmon telemetry (what operations occurred). Neither source alone provides a complete picture.</p>
-
-<h3>Final Answer</h3>
 <div class="exec-box">
-  <div class="exec-label">Answer to the research question</div>
-  <p>Substantial evidence remains. Across representative fileless and injection scenarios, a trained analyst with Volatility 3 and PE-sieve can reliably identify the malicious process, recover the payload, extract decrypted configuration and C2 information, and reconstruct attacker intent — even after the original disk artifact has been deleted — as long as memory is acquired while the process is still running.</p>
-  <p><strong>Memory tells the truth.</strong></p>
+  <div class="exec-label">If you remember one thing</div>
+  <p><strong>Capture memory before you do anything else.</strong> Don't reboot, isolate in a way that kills processes, or wait for the disk image to finish. Every minute the process might exit is evidence you might lose.</p>
 </div>
 
-<h2 id="attck"><span class="section-num">17</span> MITRE ATT&amp;CK Mapping</h2>
-
-<table>
-  <thead><tr><th>Experiment</th><th>Technique ID</th><th>Technique Name</th></tr></thead>
-  <tbody>
-    <tr><td>Process Hollowing</td><td>T1055.012</td><td>Process Injection: Process Hollowing</td></tr>
-    <tr><td>Reflective / Manual Loading</td><td>T1620</td><td>Reflective Code Loading</td></tr>
-    <tr><td>Reflective / Manual Loading</td><td>T1055.001</td><td>Process Injection: DLL Injection (where cross-process)</td></tr>
-    <tr><td>Process Injection (APC)</td><td>T1055.004</td><td>Process Injection: Asynchronous Procedure Call</td></tr>
-    <tr><td>Process Injection (thread)</td><td>T1055.003</td><td>Process Injection: Thread Execution Hijacking</td></tr>
-    <tr><td>Unpacking in Memory</td><td>T1027.002</td><td>Obfuscated Files: Software Packing</td></tr>
-    <tr><td>Unpacking in Memory</td><td>T1140</td><td>Deobfuscate/Decode Files or Information</td></tr>
-    <tr><td>Fileless / Deleted Payload</td><td>T1070.004</td><td>Indicator Removal: File Deletion</td></tr>
-    <tr><td>All experiments (C2)</td><td>T1071</td><td>Application Layer Protocol</td></tr>
-  </tbody>
-</table>
-
-<h2 id="recommendations"><span class="section-num">18</span> Defensive Recommendations</h2>
-
-<ol>
-  <li><strong>Acquire memory early in any suspected intrusion.</strong> Memory forensics is time-bounded by process lifetime. Treat memory acquisition as a first-response action alongside disk imaging, not a secondary step.</li>
-  <li><strong>Deploy Sysmon with a maintained configuration.</strong> Enable at minimum: EID 1, 3, 7, 8, 10, 11, 22, 25. EID 10 (ProcessAccess) and EID 25 (Process Tampering) are particularly valuable for injection and hollowing detection.</li>
-  <li><strong>Forward endpoint telemetry to a SIEM in real-time.</strong> Attackers who delete event logs cannot retroactively remove events already received by a remote SIEM.</li>
-  <li><strong>Integrate PE-sieve / Hollows Hunter into incident response workflow.</strong> Where live analysis is possible, PE-sieve provides complementary detection to Volatility's malfind, catching hollowing cases that involve file-backed regions.</li>
-  <li><strong>Prioritize behavioral detection over signature-based detection for in-memory threats.</strong> Packed, encrypted, and reflectively loaded payloads defeat most static signatures. Behavioral rules targeting the execution sequence are more durable.</li>
-  <li><strong>Develop memory forensics capability within the DFIR team.</strong> Regular training on representative scenarios is necessary to build analyst confidence before an actual incident.</li>
-  <li><strong>Run periodic memory integrity scanning in production.</strong> Short-interval or triggered scanning of running processes for malfind-class indicators provides early detection of injection attempts. Tune thresholds against known JIT and security software baselines.</li>
-</ol>
-
-<h2 id="references"><span class="section-num">19</span> References</h2>
-
-<h3>Primary Tools</h3>
 <ul>
-  <li><a href="https://github.com/volatilityfoundation/volatility3" target="_blank" rel="noopener">Volatility Foundation — Volatility 3</a></li>
-  <li><a href="https://volatility3.readthedocs.io/" target="_blank" rel="noopener">Volatility 3 Official Documentation</a></li>
-  <li><a href="https://github.com/hasherezade/pe-sieve" target="_blank" rel="noopener">hasherezade — PE-sieve</a></li>
-  <li><a href="https://github.com/hasherezade/hollows_hunter" target="_blank" rel="noopener">hasherezade — Hollows Hunter</a></li>
-  <li><a href="https://github.com/SwiftOnSecurity/sysmon-config" target="_blank" rel="noopener">SwiftOnSecurity — Sysmon Config</a></li>
-  <li><a href="https://github.com/olafhartong/sysmon-modular" target="_blank" rel="noopener">Olaf Hartong — sysmon-modular</a></li>
+  <li><strong>Memory first, disk second</strong> for anything that looks fileless.</li>
+  <li><strong>Correlate.</strong> Volatility tells you what was in memory, and Sysmon tells you how it got there. You need both to tell the full story.</li>
+  <li><strong>Forward telemetry off-host in real time</strong> so log clearing can't erase your timeline.</li>
+  <li><strong>Pair Volatility with PE-sieve.</strong> They catch different kinds of hollowing.</li>
+  <li><strong>Practise on known samples</strong> before the real incident. Reading malfind output takes experience.</li>
 </ul>
 
-<h3>MITRE ATT&amp;CK</h3>
-<ul>
-  <li>T1055 — Process Injection · T1055.012 — Process Hollowing · T1055.004 — APC Injection</li>
-  <li>T1620 — Reflective Code Loading · T1027.002 — Software Packing</li>
-  <li>T1070.004 — File Deletion · T1140 — Deobfuscate/Decode</li>
-</ul>
+<p>Attackers can delete their files, encrypt their payloads, and hide in other processes. While their code is running, though, it has to be somewhere in memory, and that's where you'll find it.</p>
 
-<h3>Research and Technical Reading</h3>
+<div class="pullquote">Memory tells the truth. You just have to ask before it forgets.</div>
+
+<h2 id="refs"><span class="section-num">13</span> References &amp; further reading</h2>
 <ul>
-  <li>Insinuator.net — Some experiments with Process Hollowing</li>
-  <li>CyberArk — Masking Malicious Memory Artifacts: Phantom DLL Hollowing</li>
-  <li>Forrest Orr — Masking Malicious Memory Artifacts Part II</li>
-  <li>ired.team — Reflective DLL Injection</li>
-  <li>Volatility Foundation — Detect the Undetectable Challenge</li>
-  <li>Paraben Corporation — Investigating Fileless Malware Through Volatile Memory Forensics</li>
-  <li>Trustwave SpiderLabs — Analyzing Malware Hollow Processes</li>
+  <li><a href="https://github.com/volatilityfoundation/volatility3" target="_blank" rel="noopener">Volatility 3</a> and its <a href="https://volatility3.readthedocs.io/" target="_blank" rel="noopener">documentation</a></li>
+  <li><a href="https://github.com/hasherezade/pe-sieve" target="_blank" rel="noopener">PE-sieve</a> and <a href="https://github.com/hasherezade/hollows_hunter" target="_blank" rel="noopener">Hollows Hunter</a>, by hasherezade</li>
+  <li><a href="https://github.com/SwiftOnSecurity/sysmon-config" target="_blank" rel="noopener">SwiftOnSecurity sysmon-config</a> and <a href="https://github.com/olafhartong/sysmon-modular" target="_blank" rel="noopener">Olaf Hartong's sysmon-modular</a></li>
+  <li>Forrest Orr, <em>Masking Malicious Memory Artifacts</em> series (phantom DLL hollowing)</li>
+  <li>ired.team, <em>Reflective DLL Injection</em></li>
+  <li>MITRE ATT&amp;CK: T1055.012, T1055.004, T1620, T1027.002, T1140, T1070.004</li>
 </ul>
 
 <div class="disclaimer">
   <strong>Disclaimer</strong>
-  This research was conducted in a controlled, authorized environment. All techniques described are documented for defensive and educational purposes. Detection rules and analysis methodologies are conceptual unless explicitly stated otherwise. Tool behavior and telemetry availability vary by EDR product, Windows version, Sysmon configuration, and collection architecture.
+  All experiments were run in a controlled, authorized, isolated environment, and everything here is published for defensive and educational use. Plugin output and telemetry depend on the Windows build, Volatility version, Sysmon configuration, and EDR in use.
+</div>
+
+<div class="post-nav">
+  <a href="/0X1/">← All posts</a>
+  <a href="/0X1/defensive/edr-evasion.html">Related: The Cat-and-Mouse Game →</a>
 </div>
 
 </div>
