@@ -1,0 +1,14 @@
+/* Shared post furniture: loaded by every post page */
+.byline-author{font-weight:600}
+.related{margin:56px 0 0;padding-top:28px;border-top:1px solid var(--border)}
+.related-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px}
+.related-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.related-card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;color:var(--text);text-decoration:none;transition:border-color .15s}
+.related-card:hover{border-color:var(--accent);text-decoration:none}
+.related-card .rc-cat{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.related-card .rc-title{font-size:15px;font-weight:700;line-height:1.35}
+.related-all{display:inline-block;margin-top:16px;font-size:14px;font-weight:600}
+.site-footer-links a{margin:0 2px}
+@media(max-width:600px){.related-grid{grid-template-columns:1fr}}
+.disclaimer a,.related-all{color:var(--accent)}
+.disclaimer p{font-size:13px;color:var(--text-muted)}

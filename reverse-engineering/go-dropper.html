@@ -173,6 +173,8 @@ footer a{color:var(--accent)}
 .verdict b{color:var(--tag-pass-fg);font-size:11px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
 .post-nav{display:flex;justify-content:space-between;gap:16px;margin-top:40px;font-size:14px}
 </style>
+<link rel="stylesheet" href="/0X1/assets/post.css?v=2">
+<link rel="alternate" type="application/rss+xml" title="0X1 RSS" href="/0X1/feed.xml">
 </head>
 <body>
 <script>(function(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();</script>
@@ -183,6 +185,7 @@ footer a{color:var(--accent)}
     <div class="nav-links">
       <a href="/0X1/">Home</a>
       <a href="/0X1/about.html">About</a>
+      <a href="/0X1/feed.xml">RSS</a>
     </div>
     <button class="theme-btn" onclick="(function(){const r=document.documentElement;const c=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',c==='dark'?'light':'dark');localStorage.setItem('theme',r.getAttribute('data-theme'))})()">◑</button>
   </div>
@@ -198,12 +201,30 @@ footer a{color:var(--accent)}
     <h1>Six Locks, No Key</h1>
     <p class="hero-sub">Reversing a Go dropper's six-step payload decryption, and unpacking its infostealer without ever running it.</p>
     <div class="hero-meta">
+      <span class="byline-author">✍ BlackXero1</span>
       <span>📅 2026-11-20</span>
       <span>🔖 GoReSym · capstone · Ghidra · Python</span>
-      <span>⏱ 12 min read</span>
+      <span>⏱ 9 min read</span>
     </div>
   </div>
 </header>
+
+<div class="container">
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#why-go">Why Go binaries feel hard</a></li>
+      <li><a href="#symbols">Step one: get the names back</a></li>
+      <li><a href="#blob">Step two: find the hidden payload</a></li>
+      <li><a href="#loops">Step three: read the loops</a></li>
+      <li><a href="#replay">Step four: replay it in Python</a></li>
+      <li><a href="#payload">What came out</a></li>
+      <li><a href="#method">The method, for your next Go dropper</a></li>
+      <li><a href="#detect">Detection</a></li>
+      <li><a href="#takeaways">Takeaways</a></li>
+    </ol>
+  </div>
+</div>
 
 <div class="container">
 <div class="article">
@@ -425,18 +446,29 @@ print(hashlib.sha256(out).hexdigest())</code></pre>
   <strong>Disclaimer</strong>
   All analysis was carried out in a controlled, authorized environment, and published for defensive and educational use. Indicators are defanged where they could be clickable.
 </div>
-
-<div class="post-nav">
-  <a href="/0X1/">← All posts</a>
-  <a href="/0X1/malware-analysis/clickfix.html">Related: ClickFix: Two Chains, One Technique →</a>
+</div>
 </div>
 
-</div>
+<div class="container">
+  <section class="related">
+    <div class="related-title">Related research</div>
+    <div class="related-grid">
+    <a class="related-card" href="/0X1/malware-analysis/clickfix.html">
+      <div class="rc-cat">Malware Analysis · Case Study</div>
+      <div class="rc-title">ClickFix: Two Chains, One Technique</div>
+    </a>
+    <a class="related-card" href="/0X1/dfir/memory-forensics.html">
+      <div class="rc-cat">Defensive · DFIR · Research</div>
+      <div class="rc-title">Memory Tells the Truth</div>
+    </a>
+    </div>
+    <a class="related-all" href="/0X1/">← All posts</a>
+  </section>
 </div>
 
 <footer>
-  <div class="container">
-    © 2026 BlackXero1 · <a href="/0X1/">0X1 Blog</a> · All research authorized
+  <div class="container site-footer-links">
+    © 2026 BlackXero1 · <a href="/0X1/">0X1 Blog</a> · <a href="/0X1/about.html">About</a> · <a href="/0X1/feed.xml">RSS</a> · All research authorized
   </div>
 </footer>
 
