@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0X1 — Offensive Security Research</title>
+<style>
+:root {
+  --bg:          #F2F5F9;
+  --bg-alt:      #E6EBF3;
+  --surface:     #FFFFFF;
+  --surface-2:   #EEF2F8;
+  --border:      #C8D3E2;
+  --text:        #0D1423;
+  --text-muted:  #55657E;
+  --accent:      #0284C7;
+  --accent-glow: rgba(2,132,199,0.10);
+  --accent-warm: #B8520E;
+  --code-bg:     #12192B;
+  --code-text:   #CDD5E0;
+  --code-dim:    #6B7FA0;
+  --code-hi:     #79D4F1;
+  --hero-bytes:  #0A4D6B;
+  --pass:        #16A34A;
+  --warn:        #B8520E;
+  --tag-pass-bg: #DCFCE7; --tag-pass-fg: #166534;
+  --tag-warn-bg: #FEF3C7; --tag-warn-fg: #92400E;
+  --tag-note-bg: #EFF6FF; --tag-note-fg: #1D4ED8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #08090D; --bg-alt: #0C0F18;
+    --surface: #10141F; --surface-2: #161D2E;
+    --border: #1E2A40;
+    --text: #D4DCE8; --text-muted: #7A8AA0;
+    --accent: #00B4D8; --accent-glow: rgba(0,180,216,0.10);
+    --accent-warm: #F4A261;
+    --code-bg: #0B0D13; --code-text: #CDD5E0;
+    --code-dim: #4A5A72; --code-hi: #79D4F1;
+    --hero-bytes: #79D4F1;
+    --pass: #3FB950; --warn: #F4A261;
+    --tag-pass-bg: rgba(63,185,80,0.12); --tag-pass-fg: #3FB950;
+    --tag-warn-bg: rgba(244,162,97,0.10); --tag-warn-fg: #F4A261;
+    --tag-note-bg: rgba(0,180,216,0.10); --tag-note-fg: #00B4D8;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#08090D;--bg-alt:#0C0F18;--surface:#10141F;--surface-2:#161D2E;
+  --border:#1E2A40;--text:#D4DCE8;--text-muted:#7A8AA0;
+  --accent:#00B4D8;--accent-glow:rgba(0,180,216,0.10);--accent-warm:#F4A261;
+  --code-bg:#0B0D13;--code-text:#CDD5E0;--code-dim:#4A5A72;--code-hi:#79D4F1;
+  --hero-bytes:#79D4F1;--pass:#3FB950;--warn:#F4A261;
+  --tag-pass-bg:rgba(63,185,80,0.12);--tag-pass-fg:#3FB950;
+  --tag-warn-bg:rgba(244,162,97,0.10);--tag-warn-fg:#F4A261;
+  --tag-note-bg:rgba(0,180,216,0.10);--tag-note-fg:#00B4D8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:880px;margin:0 auto;padding:0 28px}
+
+/* ── Topnav ── */
+.topnav{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:14px 0}
+.topnav .container{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{font-size:17px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+.nav-brand span{color:var(--accent)}
+.nav-links{display:flex;gap:20px}
+.nav-links a{font-size:13px;font-weight:600;color:var(--text-muted);letter-spacing:.02em;transition:color .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);text-decoration:none}
+.theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text-muted);cursor:pointer;transition:border-color .15s}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Hero ── */
+.hero{background:var(--bg-alt);border-bottom:1px solid var(--border);padding:72px 0 60px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 100% 50%,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.hero-title{font-size:clamp(36px,6vw,62px);font-weight:800;line-height:1.05;letter-spacing:-.04em;color:var(--text);margin-bottom:20px}
+.hero-title span{color:var(--accent)}
+.hero-subtitle{font-size:17px;color:var(--text-muted);max-width:580px;line-height:1.65;margin-bottom:28px}
+.hero-bytes{font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:clamp(10px,1.5vw,12px);letter-spacing:.05em;color:var(--hero-bytes);opacity:.5;line-height:2.1;margin-top:32px;user-select:none}
+
+/* ── Category nav ── */
+.cat-bar{padding:28px 0 20px;border-bottom:1px solid var(--border)}
+.cat-bar .container{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cat-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;background:var(--surface);transition:all .15s;user-select:none}
+.cat-pill:hover,.cat-pill.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.cat-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ── Post grid ── */
+.posts-section{padding:48px 0 80px}
+.posts-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:8px}
+.posts-header h2{font-size:13px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--text-muted)}
+.posts-count{font-size:12px;color:var(--text-muted)}
+.post-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.post-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
+.post-card:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.post-card-top{padding:22px 22px 16px;flex:1}
+.post-eyebrow{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.post-title{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.25;color:var(--text);margin-bottom:10px}
+.post-desc{font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:14px}
+.post-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;letter-spacing:.04em}
+.tag-pass{background:var(--tag-pass-bg);color:var(--tag-pass-fg)}
+.tag-warn{background:var(--tag-warn-bg);color:var(--tag-warn-fg)}
+.tag-note{background:var(--tag-note-bg);color:var(--tag-note-fg)}
+.post-card-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
+.post-date{font-size:12px;color:var(--text-muted);font-family:"Cascadia Code","Fira Code",Consolas,monospace}
+.post-read{font-size:12px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:4px}
+.post-read::after{content:"→";transition:transform .15s}
+.post-card:hover .post-read::after{transform:translateX(3px)}
+
+/* ── Coming soon card ── */
+.post-card.soon{opacity:.55;pointer-events:none}
+.post-card.soon .post-eyebrow{color:var(--text-muted)}
+
+/* ── Empty state ── */
+.empty{padding:60px 0;text-align:center;color:var(--text-muted);font-size:14px;display:none}
+.empty.show{display:block}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--text-muted);font-size:13px}
+footer a{color:var(--accent)}
+
+@media(max-width:600px){
+  .hero{padding:48px 0 40px}
+  .post-grid{grid-template-columns:1fr}
+  .nav-links{gap:12px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="container">
+    <a href="/" class="nav-brand"><span>0X</span>1</a>
+    <div class="nav-links">
+      <a href="/" class="active">Home</a>
+      <a href="/offensive/">Offensive</a>
+      <a href="https://github.com/BlackXero1/0X1" target="_blank">GitHub</a>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◑</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Offensive Security Research · Reverse Engineering · Malware Analysis</div>
+    <h1 class="hero-title"><span>0X</span>1</h1>
+    <p class="hero-subtitle">
+      Hands-on write-ups from the lab: EDR evasion, malware analysis, exploit development,
+      and reverse engineering — every code snippet compiled, every output captured from a real run.
+    </p>
+    <div class="hero-bytes">
+      48 B8 [ExitProcess] · FF D0 · C3 · XOR 0xAB → PAGE_NOACCESS → Sleep → Restore<br>
+      B9 EF BE 00 00 · 48 83 EC 28 · syscall → mov r10,rcx · ret<br>
+      AES-256-GCM · PBKDF2-SHA256 · Hell's Gate SSN · Ekko Sleep Obfuscation
+    </div>
+  </div>
+</header>
+
+<div class="cat-bar">
+  <div class="container">
+    <button class="cat-pill active" data-cat="all"><span class="dot"></span>All posts</button>
+    <button class="cat-pill" data-cat="offensive"><span class="dot"></span>Offensive</button>
+    <button class="cat-pill" data-cat="malware"><span class="dot"></span>Malware Analysis</button>
+    <button class="cat-pill" data-cat="re"><span class="dot"></span>Reverse Engineering</button>
+  </div>
+</div>
+
+<div class="posts-section">
+  <div class="container">
+    <div class="posts-header">
+      <h2>Latest Posts</h2>
+      <span class="posts-count" id="count"></span>
+    </div>
+
+    <div class="post-grid" id="grid">
+
+      <!-- EDR Evasion -->
+      <article class="post-card" data-cat="offensive">
+        <div class="post-card-top">
+          <div class="post-eyebrow">Offensive Security</div>
+          <h3 class="post-title">EDR Evasion — Layers, Live</h3>
+          <p class="post-desc">Four evasion layers — anti-analysis, hook removal, syscall resolution, process injection, and cryptography — implemented in C++ and verified against a live Windows 10 target.</p>
+          <div class="post-tags">
+            <span class="tag tag-pass">✓ Compiled</span>
+            <span class="tag tag-pass">✓ Tested</span>
+            <span class="tag tag-note">C++ · WinAPI</span>
+            <span class="tag tag-warn">Auth Research Only</span>
+          </div>
+        </div>
+        <div class="post-card-foot">
+          <span class="post-date">2026-11-20</span>
+          <a href="/offensive/edr.html" class="post-read">Read</a>
+        </div>
+      </article>
+
+      <!-- Placeholder: Malware Analysis -->
+      <article class="post-card soon" data-cat="malware">
+        <div class="post-card-top">
+          <div class="post-eyebrow">Malware Analysis</div>
+          <h3 class="post-title">Coming soon</h3>
+          <p class="post-desc">Next write-up in progress.</p>
+          <div class="post-tags">
+            <span class="tag tag-note">Upcoming</span>
+          </div>
+        </div>
+        <div class="post-card-foot">
+          <span class="post-date">—</span>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="empty" id="empty">No posts in this category yet.</div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <p>© 2026 <a href="https://github.com/BlackXero1" target="_blank">BlackXero1</a> · Authorized research only · <a href="https://github.com/BlackXero1/0X1" target="_blank">GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+// Theme toggle
+function toggleTheme(){
+  const r=document.documentElement;
+  const cur=r.getAttribute('data-theme')||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  localStorage.setItem('theme',r.getAttribute('data-theme'));
+}
+(function(){
+  const saved=localStorage.getItem('theme');
+  if(saved)document.documentElement.setAttribute('data-theme',saved);
+})();
+
+// Category filter
+const pills=document.querySelectorAll('.cat-pill');
+const cards=document.querySelectorAll('.post-card');
+const count=document.getElementById('count');
+const empty=document.getElementById('empty');
+
+function updateCount(){
+  const visible=[...cards].filter(c=>c.style.display!=='none'&&!c.classList.contains('soon'));
+  count.textContent=visible.length+' post'+(visible.length!==1?'s':'');
+}
+
+pills.forEach(pill=>{
+  pill.addEventListener('click',()=>{
+    pills.forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');
+    const cat=pill.dataset.cat;
+    let any=false;
+    cards.forEach(card=>{
+      const match=cat==='all'||card.dataset.cat===cat;
+      card.style.display=match?'':'none';
+      if(match&&!card.classList.contains('soon'))any=true;
+    });
+    empty.classList.toggle('show',!any);
+    updateCount();
+  });
+});
+updateCount();
+</script>
+</body>
+</html>
