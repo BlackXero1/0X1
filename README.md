@@ -8,6 +8,7 @@ Malware analysis, reverse engineering, threat intelligence and detection researc
 
 | Post | Category | Type | Date |
 |------|----------|------|------|
+| [The Loader Is the Malware](https://blackxero1.github.io/0X1/malware-analysis/loader-is-the-malware.html) | Malware Analysis · DLL Side-Loading | Deep Dive | 2026-11-23 |
 | [Six Locks, No Key](https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html) | Reverse Engineering · Go Malware | Deep Dive | 2026-11-20 |
 | [Memory Tells the Truth](https://blackxero1.github.io/0X1/dfir/memory-forensics.html) | DFIR · Memory Forensics | Research | 2026-11-20 |
 | [EDR Evasion: Layers, Live](https://blackxero1.github.io/0X1/offensive/edr.html) | Offensive Research | Research | 2026-11-17 |
@@ -26,6 +27,7 @@ assets/post.css                    Shared post styles (related posts, byline)
 reverse-engineering/go-dropper.html
 dfir/memory-forensics.html
 offensive/edr.html
+malware-analysis/loader-is-the-malware.html
 malware-analysis/clickfix.html
 malware-analysis/bitter-apt.html
 defensive/edr-evasion.html

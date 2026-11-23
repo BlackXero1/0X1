@@ -6,7 +6,15 @@
   <atom:link href="https://blackxero1.github.io/0X1/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Malware analysis, reverse engineering, threat intelligence and detection research by BlackXero1.</description>
   <language>en</language>
-  <lastBuildDate>Fri, 20 Nov 2026 09:00:00 +0000</lastBuildDate>
+  <lastBuildDate>Mon, 23 Nov 2026 09:00:00 +0000</lastBuildDate>
+  <item>
+    <title>The Loader Is the Malware</title>
+    <link>https://blackxero1.github.io/0X1/malware-analysis/loader-is-the-malware.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/malware-analysis/loader-is-the-malware.html</guid>
+    <pubDate>Mon, 23 Nov 2026 09:00:00 +0000</pubDate>
+    <category>Malware Analysis · DLL Side-Loading</category>
+    <description>31 side-loading samples and 8 live detonations: how Mustang Panda, MuddyWater and commodity crews hide inside signed Windows programs, a reversed RtlRegisterWait loader shared across four hosts, and a tested detection scorecard.</description>
+  </item>
   <item>
     <title>Six Locks, No Key</title>
     <link>https://blackxero1.github.io/0X1/reverse-engineering/go-dropper.html</link>
