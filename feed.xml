@@ -6,7 +6,15 @@
   <atom:link href="https://blackxero1.github.io/0X1/feed.xml" rel="self" type="application/rss+xml"/>
   <description>Malware analysis, reverse engineering, threat intelligence and detection research by BlackXero1.</description>
   <language>en</language>
-  <lastBuildDate>Mon, 23 Nov 2026 09:00:00 +0000</lastBuildDate>
+  <lastBuildDate>Thu, 26 Nov 2026 09:00:00 +0000</lastBuildDate>
+  <item>
+    <title>Born in the Kernel</title>
+    <link>https://blackxero1.github.io/0X1/malware-analysis/born-in-the-kernel.html</link>
+    <guid isPermaLink="true">https://blackxero1.github.io/0X1/malware-analysis/born-in-the-kernel.html</guid>
+    <pubDate>Thu, 26 Nov 2026 09:00:00 +0000</pubDate>
+    <category>Malware Analysis · BYOVD</category>
+    <description>Nine signed, vulnerable kernel drivers loaded on a patched Windows 10 VM with Defender on: seven loaded unopposed, a common Sysmon tuning hid them all, and tested YARA rules with clean-set false-positive numbers.</description>
+  </item>
   <item>
     <title>The Loader Is the Malware</title>
     <link>https://blackxero1.github.io/0X1/malware-analysis/loader-is-the-malware.html</link>
